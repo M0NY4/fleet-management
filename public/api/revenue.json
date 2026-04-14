@@ -1,0 +1,14 @@
+[
+  { "month": "Apr", "revenue": 220000, "expenses": 140000 },
+  { "month": "May", "revenue": 250000, "expenses": 160000 },
+  { "month": "Jun", "revenue": 210000, "expenses": 130000 },
+  { "month": "Jul", "revenue": 280000, "expenses": 170000 },
+  { "month": "Aug", "revenue": 300000, "expenses": 180000 },
+  { "month": "Sep", "revenue": 270000, "expenses": 165000 },
+  { "month": "Oct", "revenue": 320000, "expenses": 190000 },
+  { "month": "Nov", "revenue": 350000, "expenses": 200000 },
+  { "month": "Dec", "revenue": 380000, "expenses": 220000 },
+  { "month": "Jan", "revenue": 340000, "expenses": 210000 },
+  { "month": "Feb", "revenue": 310000, "expenses": 195000 },
+  { "month": "Mar", "revenue": 268000, "expenses": 155000 }
+]

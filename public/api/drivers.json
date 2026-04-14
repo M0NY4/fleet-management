@@ -1,0 +1,12 @@
+[
+  { "id": "d1", "name": "Rahul Sharma", "phone": "9876543210", "licenseExpiry": "2026-05-10", "license": "MH12XXX", "status": "Active" },
+  { "id": "d2", "name": "Amit Kumar", "phone": "8765432109", "licenseExpiry": "2024-02-15", "license": "MH14YYY", "status": "Expired" },
+  { "id": "d3", "name": "Suresh Patil", "phone": "9123456780", "licenseExpiry": "2027-01-20", "license": "MH12ZZZ", "status": "Active" },
+  { "id": "d4", "name": "Vikram Singh", "phone": "9812345671", "licenseExpiry": "2025-11-15", "license": "MH15AAA", "status": "Active" },
+  { "id": "d5", "name": "Anil More", "phone": "9712345672", "licenseExpiry": "2026-03-25", "license": "MH02BBB", "status": "Active" },
+  { "id": "d6", "name": "Rajesh G.", "phone": "9612345673", "licenseExpiry": "2026-08-10", "license": "MH14CCC", "status": "Active" },
+  { "id": "d7", "name": "Manish K.", "phone": "9512345674", "licenseExpiry": "2027-05-12", "license": "MH01DDD", "status": "Active" },
+  { "id": "d8", "name": "Sunil V.", "phone": "9412345675", "licenseExpiry": "2025-06-30", "license": "MH12EEE", "status": "Active" },
+  { "id": "d9", "name": "Ganesh M.", "phone": "9312345676", "licenseExpiry": "2026-12-14", "license": "MH04FFF", "status": "Active" },
+  { "id": "d10", "name": "Prakash J.", "phone": "9212345677", "licenseExpiry": "2026-09-20", "license": "MH15GGG", "status": "Active" }
+]

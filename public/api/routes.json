@@ -1,0 +1,12 @@
+[
+  { "id": "r1", "name": "Pune → Mumbai", "distance": 150 },
+  { "id": "r2", "name": "Mumbai → Lonavala", "distance": 80 },
+  { "id": "r3", "name": "Pune → Mahabaleshwar", "distance": 120 },
+  { "id": "r4", "name": "Nashik → Shirdi", "distance": 90 },
+  { "id": "r5", "name": "Kolhapur → Goa", "distance": 200 },
+  { "id": "r6", "name": "Solapur → Hyderabad", "distance": 300 },
+  { "id": "r7", "name": "Nagpur → Raipur", "distance": 280 },
+  { "id": "r8", "name": "Aurangabad → Ahmednagar", "distance": 110 },
+  { "id": "r9", "name": "Mumbai → Gujarat", "distance": 450 },
+  { "id": "r10", "name": "Pune → Bangalore", "distance": 800 }
+]

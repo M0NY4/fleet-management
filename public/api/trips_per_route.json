@@ -1,0 +1,12 @@
+[
+  { "route": "Mum→Pune", "trips": 48 },
+  { "route": "Pune→Mah", "trips": 32 },
+  { "route": "Nash→Shir", "trips": 25 },
+  { "route": "Kolh→Goa", "trips": 15 },
+  { "route": "Sol→Hyd", "trips": 20 },
+  { "route": "Nag→Rai", "trips": 12 },
+  { "route": "Aur→Ahm", "trips": 18 },
+  { "route": "Mum→Guj", "trips": 40 },
+  { "route": "Pune→Ban", "trips": 10 },
+  { "route": "Mum→Lonav", "trips": 55 }
+]

@@ -1,0 +1,12 @@
+[
+  { "id": "vd1", "vehicleNumber": "MH12AB1234", "docType": "Insurance", "expiry": "2026-05-10", "status": "Valid" },
+  { "id": "vd2", "vehicleNumber": "MH14XY5678", "docType": "Permit", "expiry": "2026-06-15", "status": "Valid" },
+  { "id": "vd3", "vehicleNumber": "MH04ZZ9999", "docType": "Fitness", "expiry": "2025-12-20", "status": "Valid" },
+  { "id": "vd4", "vehicleNumber": "MH12CD5678", "docType": "Insurance", "expiry": "2026-01-10", "status": "Valid" },
+  { "id": "vd5", "vehicleNumber": "MH15EF9012", "docType": "Pollution", "expiry": "2024-11-05", "status": "Expired" },
+  { "id": "vd6", "vehicleNumber": "MH02GH3456", "docType": "Insurance", "expiry": "2026-03-30", "status": "Valid" },
+  { "id": "vd7", "vehicleNumber": "MH14IJ7890", "docType": "Permit", "expiry": "2026-08-12", "status": "Valid" },
+  { "id": "vd8", "vehicleNumber": "MH01KL1234", "docType": "Insurance", "expiry": "2027-02-14", "status": "Valid" },
+  { "id": "vd9", "vehicleNumber": "MH12MN5678", "docType": "Fitness", "expiry": "2025-09-30", "status": "Valid" },
+  { "id": "vd10", "vehicleNumber": "MH04OP9012", "docType": "Pollution", "expiry": "2026-05-20", "status": "Valid" }
+]

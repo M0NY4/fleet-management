@@ -1,0 +1,12 @@
+[
+  { "vehicle": "MH12AB1234", "profit": 45000 },
+  { "vehicle": "MH14XY5678", "profit": 32000 },
+  { "vehicle": "MH04ZZ9999", "profit": 55000 },
+  { "vehicle": "MH12CD5678", "profit": 12000 },
+  { "vehicle": "MH15EF9012", "profit": 28000 },
+  { "vehicle": "MH02GH3456", "profit": 15000 },
+  { "vehicle": "MH14IJ7890", "profit": 40000 },
+  { "vehicle": "MH01KL1234", "profit": 95000 },
+  { "vehicle": "MH12MN5678", "profit": 22000 },
+  { "vehicle": "MH04OP9012", "profit": 19000 }
+]

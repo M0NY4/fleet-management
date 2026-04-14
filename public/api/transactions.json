@@ -1,0 +1,12 @@
+[
+  { "id": "TR001", "type": "Income", "category": "Trip Revenue", "amount": 1200, "date": "2026-03-10", "description": "Trip t2 Complete" },
+  { "id": "TR002", "type": "Expense", "category": "Fuel Cost", "amount": 500, "date": "2026-03-11", "description": "Fuel for MH12AB1234" },
+  { "id": "TR003", "type": "Income", "category": "Trip Revenue", "amount": 3300, "date": "2026-03-16", "description": "Trip t7 Payment" },
+  { "id": "TR004", "type": "Expense", "category": "Operational Cost", "amount": 200, "date": "2026-03-12", "description": "Toll charges Pune expressway" },
+  { "id": "TR005", "type": "Income", "category": "Trip Advance", "amount": 5000, "date": "2026-03-21", "description": "Advance for Delegation Trip" },
+  { "id": "TR006", "type": "Expense", "category": "Personnel", "amount": 1500, "date": "2026-03-15", "description": "Driver Salaries Advance" },
+  { "id": "TR007", "type": "Income", "category": "Trip Revenue", "amount": 900, "date": "2026-03-13", "description": "School Trip payment" },
+  { "id": "TR008", "type": "Expense", "category": "Maintenance", "amount": 1000, "date": "2026-03-20", "description": "Maintenance MH02GH3456" },
+  { "id": "TR009", "type": "Income", "category": "Logistics Settlement", "amount": 17600, "date": "2026-03-06", "description": "Amazon Logistics Settlement" },
+  { "id": "TR010", "type": "Expense", "category": "Office Expense", "amount": 300, "date": "2026-03-22", "description": "Office Utility Bill" }
+]

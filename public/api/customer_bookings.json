@@ -1,0 +1,12 @@
+[
+  { "id": "cb1", "customerName": "TechCorp Inc.", "date": "2026-03-15", "status": "Confirmed" },
+  { "id": "cb2", "customerName": "Mr. Deshmukh", "date": "2026-03-08", "status": "Completed" },
+  { "id": "cb3", "customerName": "Wedding Planners Ltd", "date": "2026-03-24", "status": "Confirmed" },
+  { "id": "cb4", "customerName": "St. Xavier's School", "date": "2026-03-11", "status": "Completed" },
+  { "id": "cb5", "customerName": "Govt of Maharashtra", "date": "2026-03-20", "status": "Ongoing" },
+  { "id": "cb6", "customerName": "Goa Tech Fest", "date": "2026-03-27", "status": "Confirmed" },
+  { "id": "cb7", "customerName": "BlueDart Express", "date": "2026-03-14", "status": "Completed" },
+  { "id": "cb8", "customerName": "Devotee Travels", "date": "2026-03-17", "status": "Completed" },
+  { "id": "cb9", "customerName": "Reliance Industries", "date": "2026-03-23", "status": "Confirmed" },
+  { "id": "cb10", "customerName": "Amazon Logistics", "date": "2026-03-02", "status": "Completed" }
+]

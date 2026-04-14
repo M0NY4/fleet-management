@@ -1,0 +1,12 @@
+[
+  { "id": "v1", "number": "MH12AB1234", "category": "SUV", "type": "Car", "brand": "Toyota", "model": "Fortuner", "seats": 7, "fuel": "Diesel", "status": "Active" },
+  { "id": "v2", "number": "MH14XY5678", "category": "Sedan", "type": "Car", "brand": "Honda", "model": "City", "seats": 5, "fuel": "Petrol", "status": "Maintenance" },
+  { "id": "v3", "number": "MH04ZZ9999", "category": "Minibus", "type": "Bus", "brand": "Force", "model": "Traveler", "seats": 17, "fuel": "Diesel", "status": "Active" },
+  { "id": "v4", "number": "MH12CD5678", "category": "SUV", "type": "Car", "brand": "Mahindra", "model": "XUV700", "seats": 7, "fuel": "Diesel", "status": "Active" },
+  { "id": "v5", "number": "MH15EF9012", "category": "Hatchback", "type": "Car", "brand": "Maruti", "model": "Swift", "seats": 5, "fuel": "Petrol", "status": "Active" },
+  { "id": "v6", "number": "MH02GH3456", "category": "Van", "type": "Bus", "brand": "Tata", "model": "Winger", "seats": 12, "fuel": "Diesel", "status": "Maintenance" },
+  { "id": "v7", "number": "MH14IJ7890", "category": "Sedan", "type": "Car", "brand": "Hyundai", "model": "Verna", "seats": 5, "fuel": "Diesel", "status": "Active" },
+  { "id": "v8", "number": "MH01KL1234", "category": "Luxury", "type": "Car", "brand": "Mercedes", "model": "E-Class", "seats": 5, "fuel": "Petrol", "status": "Active" },
+  { "id": "v9", "number": "MH12MN5678", "category": "Mini", "type": "Car", "brand": "Tata", "model": "Tiago", "seats": 5, "fuel": "Electric", "status": "Active" },
+  { "id": "v10", "number": "MH04OP9012", "category": "Coach", "type": "Bus", "brand": "Volvo", "model": "9400", "seats": 45, "fuel": "Diesel", "status": "Active" }
+]

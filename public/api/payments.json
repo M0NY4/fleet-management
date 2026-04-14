@@ -1,0 +1,12 @@
+[
+  { "id": "PR001", "customerName": "TechCorp Inc.", "tripName": "Corporate Event Drop", "totalBill": 1800, "paidAmount": 500, "pendingAmount": 1300, "status": "Partial", "lastPaymentDate": "2026-03-16" },
+  { "id": "PR002", "customerName": "Mr. Deshmukh", "tripName": "Family Weekend Tour", "totalBill": 1200, "paidAmount": 1200, "pendingAmount": 0, "status": "Paid", "lastPaymentDate": "2026-03-11" },
+  { "id": "PR003", "customerName": "Wedding Planners", "tripName": "Wedding Pickup", "totalBill": 1680, "paidAmount": 0, "pendingAmount": 1680, "status": "Unpaid", "lastPaymentDate": "N/A" },
+  { "id": "PR004", "customerName": "St. Xavier", "tripName": "School Trip", "totalBill": 900, "paidAmount": 900, "pendingAmount": 0, "status": "Paid", "lastPaymentDate": "2026-03-13" },
+  { "id": "PR005", "customerName": "Govt MS", "tripName": "Delegation", "totalBill": 11250, "paidAmount": 5000, "pendingAmount": 6250, "status": "Partial", "lastPaymentDate": "2026-03-21" },
+  { "id": "PR006", "customerName": "BlueDart", "tripName": "Courier", "totalBill": 3300, "paidAmount": 3300, "pendingAmount": 0, "status": "Paid", "lastPaymentDate": "2026-03-16" },
+  { "id": "PR007", "customerName": "Amazon", "tripName": "Freight", "totalBill": 17600, "paidAmount": 17600, "pendingAmount": 0, "status": "Paid", "lastPaymentDate": "2026-03-06" },
+  { "id": "PR008", "customerName": "Devotee", "tripName": "Pilgrimage", "totalBill": 3640, "paidAmount": 3000, "pendingAmount": 640, "status": "Partial", "lastPaymentDate": "2026-03-19" },
+  { "id": "PR009", "customerName": "Goa Tech", "tripName": "Shuttle", "totalBill": 3600, "paidAmount": 1000, "pendingAmount": 2600, "status": "Partial", "lastPaymentDate": "2026-03-28" },
+  { "id": "PR010", "customerName": "Reliance", "tripName": "Exec Drop", "totalBill": 2200, "paidAmount": 0, "pendingAmount": 2200, "status": "Unpaid", "lastPaymentDate": "N/A" }
+]

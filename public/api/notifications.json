@@ -1,0 +1,12 @@
+[
+  { "id": "N001", "type": "License", "message": "License of Amit Kumar expiring soon", "date": "2026-03-14", "read": false },
+  { "id": "N002", "type": "Document", "message": "Insurance for MH15EF9012 expired", "date": "2026-03-15", "read": false },
+  { "id": "N003", "type": "Trip", "message": "New booking from Wedding Planners", "date": "2026-03-24", "read": true },
+  { "id": "N004", "type": "Payment", "message": "Payment received from BlueDart", "date": "2026-03-16", "read": true },
+  { "id": "N005", "type": "Service", "message": "Vehicle MH02GH3456 due for service", "date": "2026-03-20", "read": false },
+  { "id": "N006", "type": "Route", "message": "Delay reported on Pune-Mumbai expressway", "date": "2026-03-27", "read": false },
+  { "id": "N007", "type": "Driver", "message": "Attendance issue for Rajesh G.", "date": "2026-03-18", "read": true },
+  { "id": "N008", "type": "System", "message": "Database backup completed successfully", "date": "2026-03-27", "read": true },
+  { "id": "N009", "type": "Inquiry", "message": "New fleet inquiry from DHL", "date": "2026-03-26", "read": false },
+  { "id": "N010", "type": "Review", "message": "5-star rating for Suresh Patil", "date": "2026-03-25", "read": false }
+]
