@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -34,291 +35,208 @@ function FormSectionHeader({ icon: Icon, title, step, colorClass }) {
 }
 
 export default function CreateBookingPage() {
-  const [routes, setRoutes] = useState([]);
+  const navigate = useNavigate();
   const [vehicles, setVehicles] = useState([]);
   
-  const [selectedRoute, setSelectedRoute] = useState("");
+  const [tripName, setTripName] = useState("");
+  const [routePoints, setRoutePoints] = useState(["", ""]);
+  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16));
+  const [endDate, setEndDate] = useState(new Date(Date.now() + 86400000).toISOString().slice(0, 16));
+  const [distanceKm, setDistanceKm] = useState(100);
+  const [ratePerKm, setRatePerKm] = useState(25);
+  const [totalSeats, setTotalSeats] = useState(50);
   const [selectedVehicle, setSelectedVehicle] = useState("");
 
-  const [tripName, setTripName] = useState("");
-  const [vehicleCategory, setVehicleCategory] = useState("");
-  const [totalSeats, setTotalSeats] = useState("");
-  const [pickup, setPickup] = useState("");
-  const [drop, setDrop] = useState("");
-  const [tripDate, setTripDate] = useState(new Date().toISOString().split('T')[0]);
-  const [tripTime, setTripTime] = useState("08:00");
-  const [distanceKm, setDistanceKm] = useState("");
-  const [ratePerKm, setRatePerKm] = useState("20");
-
-  const totalAmount = (Number(distanceKm) * Number(ratePerKm)) || 0;
-
-  // Customer booking modal state
-  const [custName, setCustName] = useState("");
-  const [custPhone, setCustPhone] = useState("");
-  const [custSeats, setCustSeats] = useState("");
-  const [custPayMethod, setCustPayMethod] = useState("UPI");
-  const [custTerms, setCustTerms] = useState(false);
-  const [custModalOpen, setCustModalOpen] = useState(false);
+  const totalRevenue = distanceKm * ratePerKm;
 
   useEffect(() => {
-    getRoutes().then(setRoutes);
     getVehicles().then(setVehicles);
   }, []);
 
-  // Interactivity auto-fills
-  useEffect(() => {
-    if (selectedRoute && selectedRoute !== "custom") {
-      const route = routes.find(r => r.id === selectedRoute);
-      if (route) {
-        setTripName(`${route.name} Shuttle`);
-        setDistanceKm(route.distance.toString());
-        const parts = (route?.name || "").split("→").map(s => s.trim());
-        setPickup(parts[0] || "");
-        setDrop(parts[1] || "");
-      }
+  const addRoutePoint = () => setRoutePoints([...routePoints, ""]);
+  const removeRoutePoint = (index) => {
+    if (routePoints.length > 2) {
+      const newPoints = [...routePoints];
+      newPoints.splice(index, 1);
+      setRoutePoints(newPoints);
     }
-  }, [selectedRoute, routes]);
+  };
 
-  useEffect(() => {
-    if (selectedVehicle && selectedVehicle !== "custom") {
-      const v = vehicles.find(v => v.id === selectedVehicle);
-      if (v) {
-        setVehicleCategory(v.category);
-        setTotalSeats(v.type === "Bus" ? "45" : v.type === "Minibus" ? "20" : "4");
-      }
-    }
-  }, [selectedVehicle, vehicles]);
+  const updateRoutePoint = (index, value) => {
+    const newPoints = [...routePoints];
+    newPoints[index] = value;
+    setRoutePoints(newPoints);
+  };
 
-  const handleCreateBooking = () => {
-    if (!tripName || !pickup || !drop) {
-      toast.error("Required fields missing", { description: "Please complete trip and route details." });
+  const handleCreateTrip = () => {
+    if (!tripName || routePoints.some(p => !p)) {
+      toast.error("Validation Failed", { description: "Trip name and all route points are required." });
       return;
     }
-    toast.success("Operational Booking Confirmed", { description: `${tripName} • ₹${totalAmount.toLocaleString()}` });
+    toast.success("Trip Created Successfully", { description: `${tripName} is now in UPCOMING status.` });
+    setTimeout(() => navigate("/trips"), 1500);
   };
 
   return (
     <DashboardLayout>
       <PageLayout>
         <PageHeader 
-          title="Fleet Dispatch" 
-          description="Initialize a new operational trip and configure dispatch parameters." 
+          title="Create New Operation" 
+          description="Initialize a new fleet trip with multi-stop route architecture." 
         />
 
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          {/* Main Form Stepper */}
           <div className="xl:col-span-3 space-y-12">
             
-            {/* Step 1: Vehicle Configuration */}
+            {/* Step 1: Basic Identity */}
             <div className="bg-card border rounded-2xl p-6 shadow-sm border-primary/10">
-              <FormSectionHeader icon={Truck} title="Vehicle Configuration" step="01" colorClass="bg-primary text-primary-foreground" />
+              <FormSectionHeader icon={Truck} title="Basic Identity" step="01" colorClass="bg-primary text-primary-foreground" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2 space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Active Fleet</Label>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Trip Name</Label>
+                  <Input placeholder="e.g. Pune - Mumbai Corporate Shuttle" className="h-12 border-2" value={tripName} onChange={(e) => setTripName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Vehicle Allocation</Label>
                   <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
-                    <SelectTrigger className="h-12 border-2 bg-muted/20 focus:ring-primary ring-offset-2 transition-all">
-                      <SelectValue placeholder="-- Select Vehicle for Dispatch --" />
+                    <SelectTrigger className="h-12 border-2">
+                      <SelectValue placeholder="Select Vehicle" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="custom" className="font-bold text-primary">Custom Entry</SelectItem>
                       {vehicles.map(v => (
-                        <SelectItem key={v.id} value={v.id}>{v.number} • {v.category.toUpperCase()} • {v.type}</SelectItem>
+                        <SelectItem key={v.id} value={String(v.id)}>{v.number} • {v.category}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Assignment Name</Label>
-                  <Input placeholder="e.g. Pune Mumbai Shuttle" className="h-12 border-2" value={tripName} onChange={(e) => setTripName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Vehicle Category</Label>
-                  <Input placeholder="e.g. SUV, Luxury Bus" className="h-12 border-2" value={vehicleCategory} onChange={(e) => setVehicleCategory(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Operating Capacity (Seats)</Label>
-                  <Input type="number" placeholder="45" className="h-12 border-2" value={totalSeats} onChange={(e) => setTotalSeats(e.target.value)} />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Seating Capacity</Label>
+                  <Input type="number" className="h-12 border-2" value={totalSeats} onChange={(e) => setTotalSeats(e.target.value)} />
                 </div>
                 <div className="flex items-center gap-2 pt-8">
                    <Zap className="h-4 w-4 text-accent animate-pulse" />
-                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">System ready for allocation</p>
+                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Status will be set to UPCOMING</p>
                 </div>
               </div>
             </div>
 
-            {/* Step 2: Route Intelligence */}
+            {/* Step 2: Route Architecture */}
             <div className="bg-card border rounded-2xl p-6 shadow-sm border-secondary/10">
-              <FormSectionHeader icon={MapPin} title="Route Intelligence" step="02" colorClass="bg-secondary text-secondary-foreground" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2 space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Operational Path</Label>
-                  <Select value={selectedRoute} onValueChange={setSelectedRoute}>
-                    <SelectTrigger className="h-12 border-2 bg-muted/20 focus:ring-secondary ring-offset-2 transition-all">
-                      <SelectValue placeholder="-- Select Preset Route --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="custom" className="font-bold text-secondary">Manual Path Entry</SelectItem>
-                      {routes.map(r => (
-                        <SelectItem key={r.id} value={r.id}>{r.name} • {r.distance} KM</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pickup Terminal</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input value={pickup} onChange={(e) => setPickup(e.target.value)} className="h-12 pl-10 border-2" placeholder="Start Point" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Drop Terminal</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
-                    <Input value={drop} onChange={(e) => setDrop(e.target.value)} className="h-12 pl-10 border-2" placeholder="End Point" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dispatch Date</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input type="date" value={tripDate} onChange={(e) => setTripDate(e.target.value)} className="h-12 pl-10 border-2" />
-                  </div>
-                </div>
-                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dispatch Time (ETD)</Label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input type="time" value={tripTime} onChange={(e) => setTripTime(e.target.value)} className="h-12 pl-10 border-2" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 3: Commercial Controls */}
-            <div className="bg-card border rounded-2xl p-6 shadow-sm border-success/10">
-              <FormSectionHeader icon={IndianRupee} title="Commercial Controls" step="03" colorClass="bg-success text-success-foreground" />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2 text-center md:text-left">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Distance (Total)</Label>
-                  <div className="h-14 flex items-center justify-between border-2 rounded-xl px-4 bg-muted/10">
-                     <Input type="number" value={distanceKm} onChange={(e) => setDistanceKm(e.target.value)} className="border-0 shadow-none focus-visible:ring-0 p-0 text-lg font-black w-20 text-center md:text-left" />
-                     <span className="text-xs font-black text-muted-foreground uppercase">KM</span>
-                  </div>
-                </div>
-                <div className="space-y-2 text-center md:text-left">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rate Structure</Label>
-                  <div className="h-14 flex items-center justify-between border-2 rounded-xl px-4 bg-muted/10">
-                     <Input type="number" value={ratePerKm} onChange={(e) => setRatePerKm(e.target.value)} className="border-0 shadow-none focus-visible:ring-0 p-0 text-lg font-black w-20 text-center md:text-left" />
-                     <span className="text-xs font-black text-muted-foreground uppercase">/ KM</span>
-                  </div>
-                </div>
-                <div className="space-y-2 text-center md:text-left">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Est. Value (Auto)</Label>
-                  <div className="h-14 flex items-center justify-center border-2 border-dashed border-success/50 rounded-xl bg-success/5 px-4">
-                     <span className="text-lg font-black text-success tracking-tighter">₹{totalAmount.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 pt-6">
-               <Button onClick={handleCreateBooking} size="lg" className="h-14 px-10 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 flex-1">
-                  Confirm & Dispatch Trip <ArrowRight className="h-5 w-5 ml-2" />
-               </Button>
-               
-               <Dialog open={custModalOpen} onOpenChange={setCustModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="lg" className="h-14 px-8 rounded-xl font-bold border-2 border-primary/20 text-primary hover:bg-primary/5 transition-all">
-                      <Users className="h-5 w-5 mr-2" /> Add Customer Booking
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md rounded-2xl border-2">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-black uppercase tracking-tight">Configure Customer Seat</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 pt-4">
-                       {/* Simplified Dialog Content for brevity, keeping existing logic */}
-                       <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase">Customer Entity</Label>
-                          <Input value={custName} onChange={(e)=>setCustName(e.target.value)} className="h-12 border-2" placeholder="e.g. Reliance Industries" />
-                       </div>
-                       <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase">Quota (Seats)</Label>
-                          <Input type="number" value={custSeats} onChange={(e)=>setCustSeats(e.target.value)} className="h-12 border-2" />
-                       </div>
-                       <div className="flex items-center gap-2 py-4">
-                          <Checkbox checked={custTerms} onCheckedChange={(v) => setCustTerms(v === true)} id="terms" />
-                          <label htmlFor="terms" className="text-xs font-bold text-muted-foreground uppercase cursor-pointer">Manifest Compliance Guaranteed</label>
-                       </div>
-                       <Button className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-md" disabled={!custTerms}>
-                          Submit Entry
-                       </Button>
+              <FormSectionHeader icon={MapPin} title="Route Architecture" step="02" colorClass="bg-secondary text-secondary-foreground" />
+              <div className="space-y-4">
+                {routePoints.map((point, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                        {index === 0 ? "Origin" : index === routePoints.length - 1 ? "Destination" : `Stop ${index}`}
+                      </Label>
+                      <div className="relative">
+                        <MapPin className={cn("absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4", index === 0 ? "text-primary" : index === routePoints.length - 1 ? "text-emerald-500" : "text-muted-foreground")} />
+                        <Input 
+                          value={point} 
+                          onChange={(e) => updateRoutePoint(index, e.target.value)} 
+                          className="h-12 pl-10 border-2" 
+                          placeholder={index === 0 ? "Starting Terminal" : index === routePoints.length - 1 ? "End Terminal" : "Intermediate Stop"} 
+                        />
+                      </div>
                     </div>
-                  </DialogContent>
-               </Dialog>
+                    {routePoints.length > 2 && (
+                      <Button variant="ghost" size="icon" className="mt-6 text-destructive hover:bg-destructive/10" onClick={() => removeRoutePoint(index)}>
+                         <Plus className="h-4 w-4 rotate-45" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button variant="outline" className="w-full border-dashed border-2 py-6 mt-2 font-bold" onClick={addRoutePoint}>
+                  <Plus className="h-4 w-4 mr-2" /> Add Intermediate Stop
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 pt-8 border-t border-dashed">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Operational Start (Departure)</Label>
+                  <Input type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-12 border-2" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Operational End (ETA)</Label>
+                  <Input type="datetime-local" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-12 border-2" />
+                </div>
+              </div>
             </div>
+
+            {/* Step 3: Commercial Parameters */}
+            <div className="bg-card border rounded-2xl p-6 shadow-sm border-success/10">
+              <FormSectionHeader icon={IndianRupee} title="Commercial Parameters" step="03" colorClass="bg-success text-success-foreground" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estimated Distance (KM)</Label>
+                  <Input type="number" value={distanceKm} onChange={(e) => setDistanceKm(e.target.value)} className="h-14 border-2 text-lg font-black" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Commercial Rate (₹ / KM)</Label>
+                  <Input type="number" value={ratePerKm} onChange={(e) => setRatePerKm(e.target.value)} className="h-14 border-2 text-lg font-black" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estimated Revenue</Label>
+                  <div className="h-14 flex items-center justify-center border-2 border-dashed border-success/50 rounded-xl bg-success/5">
+                     <span className="text-xl font-black text-success">₹{totalRevenue.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Button onClick={handleCreateTrip} size="lg" className="w-full h-16 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 text-lg">
+               Initialize & Publish Trip <ChevronRight className="h-6 w-6 ml-2" />
+            </Button>
           </div>
 
-          {/* Real-time Ticket Preview */}
+          {/* Ticket Preview Card */}
           <div className="xl:col-span-1">
             <div className="sticky top-24 space-y-6">
-              <div className="relative bg-primary text-primary-foreground p-8 rounded-[2rem] shadow-2xl overflow-hidden border-4 border-primary shadow-primary/20">
-                 {/* Ticket Cutouts (Mocked with CSS) */}
+              <div className="bg-primary text-primary-foreground p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden border-4 border-primary">
                  <div className="absolute -left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background" />
                  <div className="absolute -right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background" />
                  
-                 {/* Pattern */}
-                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.1),transparent)]" />
-                 
                  <div className="relative z-10 flex flex-col items-center">
-                    <div className="bg-accent text-accent-foreground p-3 rounded-2xl mb-4 shadow-lg shadow-black/20">
+                    <div className="bg-accent text-accent-foreground p-3 rounded-2xl mb-6 shadow-lg">
                        <Ticket className="h-6 w-6" />
                     </div>
-                    <h2 className="text-xs font-black uppercase tracking-[0.3em] mb-8 text-white/60">Dispatch Token</h2>
+                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] mb-8 text-white/50">Trip Token</h2>
                     
                     <div className="w-full space-y-8">
                        <div className="text-center">
-                          <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Assignment</p>
-                          <p className="text-xl font-black truncate max-w-full">{tripName || "Draft Assignment"}</p>
+                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Assignment</p>
+                          <p className="text-xl font-black truncate">{tripName || "Operational Draft"}</p>
                        </div>
 
                        <div className="flex items-center justify-between border-y border-white/10 py-6">
                           <div className="text-center flex-1">
-                             <p className="text-[10px] font-bold text-white/50 uppercase">Origin</p>
-                             <p className="text-sm font-black truncate">{pickup || "TBD"}</p>
+                             <p className="text-[10px] font-bold text-white/40 uppercase">Origin</p>
+                             <p className="text-xs font-black truncate uppercase">{routePoints[0] || "TBD"}</p>
                           </div>
-                          <ArrowRight className="h-4 w-4 text-accent shrink-0 mx-2" />
+                          <ArrowRight className="h-4 w-4 text-accent mx-2" />
                           <div className="text-center flex-1">
-                             <p className="text-[10px] font-bold text-white/50 uppercase">Drop</p>
-                             <p className="text-sm font-black truncate">{drop || "TBD"}</p>
+                             <p className="text-[10px] font-bold text-white/40 uppercase">Destination</p>
+                             <p className="text-xs font-black truncate uppercase">{routePoints[routePoints.length - 1] || "TBD"}</p>
                           </div>
                        </div>
 
                        <div className="grid grid-cols-2 gap-4">
                           <div>
-                             <p className="text-[10px] font-bold text-white/50 uppercase">ETD Date</p>
-                             <p className="text-xs font-black">{tripDate || "--/--/--"}</p>
+                             <p className="text-[10px] font-bold text-white/40 uppercase">Departure</p>
+                             <p className="text-[10px] font-black">{startDate ? new Date(startDate).toLocaleDateString() : "--/--/--"}</p>
                           </div>
                           <div className="text-right">
-                             <p className="text-[10px] font-bold text-white/50 uppercase">Fleet Unit</p>
-                             <p className="text-xs font-black uppercase truncate">{selectedVehicle ? vehicles.find(v=>v.id===selectedVehicle)?.number : "UNALLOCATED"}</p>
+                             <p className="text-[10px] font-bold text-white/40 uppercase">Arrival</p>
+                             <p className="text-[10px] font-black">{endDate ? new Date(endDate).toLocaleDateString() : "--/--/--"}</p>
                           </div>
                        </div>
 
                        <div className="pt-8 border-t border-dashed border-white/20 text-center">
-                          <p className="text-[10px] font-bold text-white/50 uppercase mb-1">Contract Value</p>
-                          <p className="text-3xl font-black text-accent tracking-tighter">₹{totalAmount.toLocaleString()}</p>
+                          <p className="text-[10px] font-bold text-white/40 uppercase mb-1">Contract Est.</p>
+                          <p className="text-3xl font-black text-accent tracking-tighter">₹{totalRevenue.toLocaleString()}</p>
                        </div>
                     </div>
-                 </div>
-              </div>
-
-              <div className="bg-emerald-50 border-2 border-emerald-500/20 p-4 rounded-2xl flex items-start gap-3">
-                 <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                 <div>
-                    <p className="text-xs font-black text-emerald-900 uppercase">Dispatch Compliance</p>
-                    <p className="text-[10px] text-emerald-700 font-medium mt-1 leading-relaxed">This trip token will be validated against active fleet documentation before physical dispatch.</p>
                  </div>
               </div>
             </div>
@@ -328,3 +246,4 @@ export default function CreateBookingPage() {
     </DashboardLayout>
   );
 }
+

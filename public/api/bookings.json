@@ -1,0 +1,82 @@
+[
+    {
+        "id": 4,
+        "lastModifiedAt": "2026-03-30T12:45:04.930315",
+        "paidAmount": 0.00,
+        "passengers": [
+            {
+                "id": 8,
+                "mobileNo": "9311022655",
+                "name": "Passenger_1896d"
+            }
+        ],
+        "paymentMethod": "OFFLINE",
+        "seatsBooked": 1,
+        "status": "PENDING_APPROVAL",
+        "totalAmount": 6580.00,
+        "tripId": 1
+    },
+    {
+        "id": 15,
+        "paidAmount": 0.00,
+        "seatsBooked": 3,
+        "status": "CANCELLED",
+        "totalAmount": 10200.00,
+        "tripId": 4,
+        "passengers": [{ "name": "John Doe", "mobileNo": "9876543210" }]
+    },
+    {
+        "id": 16,
+        "paidAmount": 10200.00,
+        "seatsBooked": 2,
+        "status": "CONFIRMED",
+        "totalAmount": 10200.00,
+        "tripId": 4,
+        "passengers": [{ "name": "Jane Smith", "mobileNo": "9876543211" }]
+    },
+    {
+        "id": 17,
+        "paidAmount": 5419.31,
+        "seatsBooked": 5,
+        "status": "PARTIALLY_PAID",
+        "totalAmount": 10200.00,
+        "tripId": 4,
+        "passengers": [{ "name": "Alice Brown", "mobileNo": "9876543212" }]
+    },
+    {
+        "id": 18,
+        "paidAmount": 0.00,
+        "seatsBooked": 2,
+        "status": "CANCELLED",
+        "totalAmount": 10200.00,
+        "tripId": 4,
+        "passengers": [{ "name": "Bob White", "mobileNo": "9876543213" }]
+    },
+    {
+        "id": 19,
+        "paidAmount": 0.00,
+        "seatsBooked": 2,
+        "status": "PENDING_APPROVAL",
+        "totalAmount": 10200.00,
+        "tripId": 4,
+        "passengers": [{ "name": "Charlie Green", "mobileNo": "9876543214" }]
+    },
+    {
+        "id": 20,
+        "paidAmount": 10200.00,
+        "seatsBooked": 3,
+        "status": "CONFIRMED",
+        "totalAmount": 10200.00,
+        "tripId": 4,
+        "passengers": [{ "name": "David Black", "mobileNo": "9876543215" }]
+    },
+    {
+        "id": 21,
+        "paidAmount": 0.00,
+        "seatsBooked": 2,
+        "status": "PENDING_APPROVAL",
+        "totalAmount": 12000.00,
+        "tripId": 1,
+        "passengers": [{ "name": "Eve Adams", "mobileNo": "9876543216" }]
+    }
+]

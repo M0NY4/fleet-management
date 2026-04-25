@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, AlertTriangle } from "lucide-react";
 import { DocumentPreviewModal } from "@/components/vehicles/DocumentPreviewModal";
 
-const getColumns = (onView) => [
+const getColumns = () => [
   {
     header: "Document Type",
     accessor: (r) => (
@@ -36,20 +36,6 @@ const getColumns = (onView) => [
     ),
   },
   { header: "Status", accessor: (r) => <StatusBadge status={r.status} /> },
-  {
-    header: "Action",
-    accessor: (r) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8 w-8 p-0 text-primary hover:bg-primary/10"
-        onClick={() => onView(r)}
-        title="View Document"
-      >
-        <Eye className="h-4 w-4" />
-      </Button>
-    ),
-  },
 ];
 
 export function VehicleDocumentsModal({ open, onOpenChange, vehicle }) {
@@ -57,7 +43,7 @@ export function VehicleDocumentsModal({ open, onOpenChange, vehicle }) {
   const [loading, setLoading] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
 
-  const columns = getColumns(setPreviewDoc);
+  const columns = getColumns();
 
   useEffect(() => {
     if (open && vehicle) {
@@ -121,6 +107,7 @@ export function VehicleDocumentsModal({ open, onOpenChange, vehicle }) {
               <DataTable
                 columns={columns}
                 data={data}
+                onRowClick={setPreviewDoc}
                 searchPlaceholder="Search documents..."
               />
             ) : (

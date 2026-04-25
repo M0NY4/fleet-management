@@ -3,11 +3,19 @@ import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getTrips, getCustomerBookings } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
+import { getTrips, getBookings } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/DataTable";
 import { TableContainer } from "@/components/layout/TableContainer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
   MapPin,
@@ -28,33 +36,16 @@ import {
   HardDrive,
   Wallet,
   Calculator,
+  Share2,
+  CreditCard,
+  Check,
+  MinusCircle,
+  User
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
-function ExpenseInput({ label, value, setter, icon: Icon }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
-        {label}
-      </Label>
-      <div className="relative group">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors">
-          <Icon className="h-3.5 w-3.5" />
-        </div>
-        <Input
-          type="number"
-          value={value}
-          onChange={(e) => setter(Number(e.target.value))}
-          className="h-9 pl-9 border-border/60 bg-muted/20 focus-visible:ring-primary transition-all font-bold text-sm"
-          placeholder="0.00"
-        />
-      </div>
-    </div>
-  );
-}
 
 function DetailItem({ label, value, icon: Icon, colorClass }) {
   return (
@@ -80,566 +71,473 @@ function DetailItem({ label, value, icon: Icon, colorClass }) {
 export default function TripDetailsPage() {
   const { tripId } = useParams();
   const navigate = useNavigate();
-  const [trips, setTrips] = useState([]);
+  const [trip, setTrip] = useState(null);
   const [bookings, setBookings] = useState([]);
-
-  const [fuelCost, setFuelCost] = useState(0);
-  const [tollCharges, setTollCharges] = useState(0);
-  const [driverFood, setDriverFood] = useState(0);
-  const [parkingCharges, setParkingCharges] = useState(0);
-  const [stateBorderTax, setStateBorderTax] = useState(0);
-  const [policeEntryTax, setPoliceEntryTax] = useState(0);
-  const [cleaningCharges, setCleaningCharges] = useState(0);
-  const [driverAllowance, setDriverAllowance] = useState(0);
-  const [hotelCharges, setHotelCharges] = useState(0);
-  const [miscCharges, setMiscCharges] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [settlementData, setSettlementData] = useState(null);
 
   useEffect(() => {
-    Promise.all([getTrips(), getCustomerBookings()]).then(
-      ([tripsData, bookingsData]) => {
-        setTrips(tripsData);
-        setBookings(bookingsData);
+    setLoading(true);
+    Promise.all([getTrips(), getBookings()]).then(([tripsData, bookingsData]) => {
+      const currentTrip = tripsData.find((t) => String(t.id) === String(tripId));
+      setTrip(currentTrip);
+      
+      const customBookings = JSON.parse(localStorage.getItem("custom_bookings") || "[]");
+      const combinedBookings = [...bookingsData, ...customBookings];
+      
+      const tripBookings = combinedBookings.filter(b => String(b.tripId) === String(tripId));
+      setBookings(tripBookings);
 
-        const currentTrip = tripsData.find((t) => t.id === tripId);
-        if (currentTrip) {
-          const e = currentTrip.expenses || {};
-          setFuelCost(e.fuelCost || 0);
-          setTollCharges(e.tollCharges || 0);
-          setDriverFood(e.driverFood || 0);
-          setParkingCharges(e.parkingCharges || 0);
-          setStateBorderTax(e.stateBorderTax || 0);
-          setPoliceEntryTax(e.policeEntryTax || 0);
-          setCleaningCharges(e.cleaningCharges || 0);
-          setDriverAllowance(e.driverAllowance || 0);
-          setHotelCharges(e.hotelCharges || 0);
-          setMiscCharges(e.miscCharges || 0);
-        }
-      },
-    );
+      const settlements = JSON.parse(localStorage.getItem("trip_settlements") || "[]");
+      const currentSettlement = settlements.find(s => String(s.tripId) === String(tripId));
+      setSettlementData(currentSettlement);
+
+      setLoading(false);
+    });
   }, [tripId]);
 
-  const trip = useMemo(
-    () => trips.find((t) => t.id === tripId),
-    [trips, tripId],
-  );
+  const [selectedInquiry, setSelectedInquiry] = useState(null);
+  const [approvalAmount, setApprovalAmount] = useState("");
 
-  if (!trip) {
-    return (
-      <DashboardLayout>
-        <PageLayout>
-          <div className="flex flex-col items-center justify-center py-24 bg-card border rounded-2xl border-dashed">
-            <AlertCircle className="h-12 w-12 text-muted-foreground/30 mb-4" />
-            <h2 className="text-xl font-bold">Trip not found</h2>
-            <p className="text-muted-foreground text-sm mt-1">
-              The trip ID you requested does not exist or has been archived.
-            </p>
-            <Button
-              variant="primary"
-              className="mt-6 font-bold"
-              onClick={() => navigate("/trips")}
-            >
-              Back to Fleet Ops
-            </Button>
-          </div>
-        </PageLayout>
-      </DashboardLayout>
-    );
-  }
+  const handleApprove = () => {
+    if (!selectedInquiry) return;
+    const amount = parseFloat(approvalAmount) || 0;
+    setBookings(prev => prev.map(b => b.id === selectedInquiry.id ? { ...b, status: "CONFIRMED", paidAmount: amount } : b));
+    toast.success("Booking Confirmed", { description: `Approved with ₹${amount} payment received.` });
+    setSelectedInquiry(null);
+    setApprovalAmount("");
+  };
 
-  const totalExpenses =
-    fuelCost +
-    tollCharges +
-    driverFood +
-    parkingCharges +
-    stateBorderTax +
-    policeEntryTax +
-    cleaningCharges +
-    driverAllowance +
-    hotelCharges +
-    miscCharges;
-  const tripBookings = bookings.filter((b) => b.tripId === tripId);
-  const totalRevenue = tripBookings.reduce(
-    (sum, b) => sum + (b.paidAmount || 0),
-    0,
-  );
-  const occupancyPercent = Math.round(
-    ((trip.bookedSeats || 0) / (trip.totalSeats || 1)) * 100,
-  );
+  const handleReject = (bookingId) => {
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: "CANCELLED" } : b));
+    toast.error("Inquiry Rejected", { description: `Inquiry #${bookingId} has been cancelled.` });
+  };
 
-  const bookingCols = [
-    {
-      header: "Customer",
-      accessor: (r) => (
-        <div className="flex flex-col">
-          <span className="font-bold">{r.customerName}</span>
-          <span className="text-[10px] text-muted-foreground">{r.phone}</span>
-        </div>
-      ),
+  const inquiries = useMemo(() => bookings.filter(b => b.status === "PENDING_APPROVAL"), [bookings]);
+  const confirmedManifest = useMemo(() => bookings.filter(b => b.status !== "PENDING_APPROVAL" && b.status !== "CANCELLED"), [bookings]);
+  
+  const totalExpenses = useMemo(() => (trip?.tripExpences || []).reduce((sum, exp) => sum + exp.ammountRs, 0), [trip]);
+  const collectionTotal = useMemo(() => confirmedManifest.reduce((sum, b) => sum + (b.totalAmount || 0), 0), [confirmedManifest]);
+  const collectionPaid = useMemo(() => confirmedManifest.reduce((sum, b) => sum + (b.paidAmount || 0), 0), [confirmedManifest]);
+  const collectionPending = collectionTotal - collectionPaid;
+  
+  const confirmedSeats = useMemo(() => confirmedManifest.reduce((sum, b) => sum + b.seatsBooked, 0), [confirmedManifest]);
+  const occupancyPercent = useMemo(() => Math.round((confirmedSeats / (trip?.totalSeats || 1)) * 100), [confirmedSeats, trip]);
+  
+  // Financial Conclusion Logic (Frame 4)
+  // Actual Cash Profit = Total Paid - Total Expenses
+  // Book Profit = Total Billing - Total Expenses
+  const bookProfit = collectionTotal - totalExpenses;
+  const actualCashProfit = collectionPaid - totalExpenses;
+
+  const handleMarkAsCompleted = (bookingId) => {
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, paidAmount: b.totalAmount, status: "CONFIRMED" } : b));
+    toast.success("Payment Received", { description: "Booking has been marked as fully paid." });
+  };
+
+  const expenseCols = [
+    { 
+      header: "Expense Category", 
+      accessor: (r) => <span className="font-bold text-destructive uppercase text-[10px] tracking-widest">{r.name}</span> 
     },
-    {
-      header: "Seats",
-      accessor: (r) => <span className="font-bold">{r.seatsBooked}</span>,
+    { 
+      header: "Amount", 
+      accessor: (r) => <span className="font-black text-destructive">₹{(r.ammountRs || 0).toLocaleString()}</span> 
     },
-    {
-      header: "Paid",
-      accessor: (r) => (
-        <span className="font-bold text-emerald-600">
-          ₹{(r.paidAmount || 0).toLocaleString()}
-        </span>
-      ),
+    { 
+      header: "Receipt", 
+      accessor: (r) => r.documentPath ? <Button variant="link" size="sm" className="h-auto p-0 font-bold">View Screenshot</Button> : <span className="text-[10px] text-muted-foreground uppercase font-bold">No Proof</span> 
     },
-    {
-      header: "Pending",
-      accessor: (r) => (
-        <span
-          className={cn(
-            "font-bold",
-            (r.pendingAmount || 0) > 0
-              ? "text-destructive"
-              : "text-emerald-500",
-          )}
-        >
-          ₹{(r.pendingAmount || 0).toLocaleString()}
-        </span>
-      ),
-    },
-    { header: "Status", accessor: (r) => <StatusBadge status={r.status} /> },
   ];
+
+  if (loading) return <div className="h-screen flex items-center justify-center animate-pulse">Loading Trip Ledger...</div>;
+  const isPast = trip?.status === "COMPLETED";
 
   return (
     <DashboardLayout>
       <PageLayout fullWidth>
-        {/* Top Operational Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-primary text-primary-foreground p-6 rounded-2xl shadow-lg relative overflow-hidden">
-          {/* Subtle Background Icon */}
-          <Truck className="absolute -right-10 -bottom-10 h-64 w-64 text-white/5 pointer-events-none rotate-12" />
-
-          <div className="flex items-center gap-4 relative z-10">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => navigate("/trips")}
-              className="rounded-full bg-white/10 border-white/20 hover:bg-white/20 text-white"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-black tracking-tight">
-                  {trip.name}
-                </h1>
-                <span className="bg-accent text-accent-foreground text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
-                  {trip.status}
-                </span>
+        {/* Operation Summary Banner */}
+        <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden border-4 border-slate-800">
+           <Truck className="absolute -right-10 -bottom-10 h-64 w-64 text-white/5 pointer-events-none rotate-12" />
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              <div className="flex items-center gap-6">
+                 <Button variant="outline" size="icon" className="rounded-full bg-white/5 border-white/10 hover:bg-white/10 text-white" onClick={() => navigate("/trips")}>
+                    <ArrowLeft className="h-5 w-5" />
+                 </Button>
+                 <div>
+                    <div className="flex items-center gap-4">
+                       <h1 className="text-3xl font-black tracking-tighter uppercase">{trip.name}</h1>
+                       <StatusBadge status={trip.status} />
+                    </div>
+                    <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em] mt-1">Vehicle: {trip.vehicleNumber || "MH12AB1234"} • Trip ID #{trip.id}</p>
+                 </div>
               </div>
-              <p className="text-white/70 text-sm font-medium mt-1">
-                Operational ID:{" "}
-                <span className="text-white font-bold">{trip.id}</span> •
-                Reference:{" "}
-                <span className="text-white font-bold uppercase">
-                  {trip.vehicle}
-                </span>
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-2 relative z-10">
-            <Button
-              variant="secondary"
-              className="font-bold shadow-sm"
-              onClick={() => toast.info("Print manifest feature coming soon")}
-            >
-              Manifest
-            </Button>
-            <Button
-              className="bg-accent text-accent-foreground font-black hover:bg-accent/90"
-              onClick={() => toast.success("Trip marked as Active")}
-            >
-              Live Track
-            </Button>
-          </div>
+              <div className="flex gap-3">
+                 {isPast && (
+                    <Button className="bg-blue-600 font-black h-12 rounded-2xl uppercase tracking-widest px-8" onClick={() => toast.success("Trip finalized")}>Conclude Trip</Button>
+                 )}
+                 <Button variant="outline" className="h-12 rounded-2xl border-2 border-white/10 bg-white/5 font-bold" onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/public/booking/${trip.id}`);
+                    toast.success("Share link copied");
+                 }}><Share2 className="h-4 w-4 mr-2" /> Share Link</Button>
+              </div>
+           </div>
         </div>
 
-        {/* Top Logistical Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <DetailItem
-                label="Assigned Driver"
-                value={trip.driver}
-                icon={Users}
-                colorClass="bg-blue-500/10 text-blue-600"
-              />
-              <DetailItem
-                label="Fleet Category"
-                value={trip.vehicleCategory || "Luxury Coach"}
-                icon={Truck}
-                colorClass="bg-indigo-500/10 text-indigo-600"
-              />
-              <DetailItem
-                label="Departure"
-                value={`${trip.date} • ${trip.time}`}
-                icon={Clock}
-                colorClass="bg-orange-500/10 text-orange-600"
-              />
-              <DetailItem
-                label="Estimated Distance"
-                value={`${trip.distance} KM`}
-                icon={MapPin}
-                colorClass="bg-emerald-500/10 text-emerald-600"
-              />
-            </div>
-
-            <Card className="border-border/40 overflow-hidden shadow-sm">
-              <CardHeader className="bg-muted/30 border-b pb-4">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <MapIcon className="h-4 w-4 text-primary" /> Route Timeline
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 px-10">
-                <div className="relative border-l-2 border-primary/20 pl-8 space-y-12">
-                  {/* Pickup */}
-                  <div className="relative">
-                    <div className="absolute -left-[41px] top-0 h-5 w-5 rounded-full bg-primary border-4 border-background animate-pulse shadow-sm" />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
-                        Origin / Pickup
-                      </span>
-                      <span className="text-lg font-black text-foreground">
-                        {(trip.route || "").split("→")[0]}
-                      </span>
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 font-medium">
-                        <Clock className="h-3 w-3" /> Scheduled Check-in:{" "}
-                        {trip.time}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Mid-point (mocked) */}
-                  <div className="relative">
-                    <div className="absolute -left-[41px] top-4 h-4 w-4 rounded-full bg-border border-4 border-background" />
-                    <div className="flex flex-col opacity-40 grayscale pointer-events-none">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
-                        Waypoint 1 (Auto-logged)
-                      </span>
-                      <span className="text-base font-bold">
-                        Lonavala Food Court
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Drop */}
-                  <div className="relative">
-                    <div className="absolute -left-[41px] top-0 h-5 w-5 rounded-full bg-emerald-500 border-4 border-background shadow-sm shadow-emerald-200" />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
-                        Final Destination / Drop
-                      </span>
-                      <span className="text-lg font-black text-foreground">
-                        {(trip.route || "").split("→")[1] || "Destination"}
-                      </span>
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 font-medium">
-                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />{" "}
-                        Est. Arrival: Successful
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
-            <Card className="border-indigo-500/20 bg-indigo-50/10 shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center justify-between text-indigo-900/70">
-                  Operational Health
-                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-[10px] font-black uppercase mb-1.5 tracking-tight">
-                    <span className="text-muted-foreground">Load Factor</span>
-                    <span
-                      className={cn(
-                        occupancyPercent > 90
-                          ? "text-destructive"
-                          : "text-indigo-600",
-                      )}
-                    >
-                      {trip.bookedSeats} / {trip.totalSeats} PAX
-                    </span>
-                  </div>
-                  <div className="h-2 w-full bg-indigo-100/50 rounded-full overflow-hidden border border-indigo-200/20">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all duration-1000",
-                        occupancyPercent > 90
-                          ? "bg-destructive shadow-[0_0_8px_#ef444466]"
-                          : "bg-indigo-600 shadow-[0_0_8px_#4f46e566]",
-                      )}
-                      style={{ width: `${occupancyPercent}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-indigo-100 shadow-sm">
-                  <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
-                    <IndianRupee className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <div className="flex flex-col">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      Profitability
-                    </p>
-                    <p className="text-xl font-black tracking-tighter text-emerald-700">
-                      ₹{(totalRevenue - totalExpenses).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-3">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pl-1">
-                Actions & Controls
-              </h3>
-              <Button className="w-full h-12 rounded-xl font-black uppercase tracking-wider shadow-md bg-foreground text-background hover:bg-foreground/90 transition-all">
-                Close Trip Records
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full h-12 rounded-xl font-bold border-2 border-primary/20 text-primary hover:bg-primary/5 transition-all"
-              >
-                <Calendar className="h-4 w-4 mr-2" /> Reschedule Trip
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full h-12 rounded-xl font-bold text-destructive hover:bg-destructive/5 transition-all"
-              >
-                <AlertCircle className="h-4 w-4 mr-2" /> Cancel Operations
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Full-width Ledger and Manifest Sections */}
         <div className="space-y-8 mt-8">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">
-                Manifest / Customer List
-              </h3>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 font-bold border-dashed border-2"
-              >
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add Booking
-              </Button>
-            </div>
-            <TableContainer>
-              <DataTable columns={bookingCols} data={tripBookings} />
-            </TableContainer>
-          </div>
-
-          <Card className="border-border/60 shadow-md overflow-hidden bg-white">
-            <CardHeader className="pb-6 border-b bg-muted/20">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-black uppercase tracking-widest flex items-center gap-2 text-primary">
-                  <Calculator className="h-5 w-5" /> Operational Settlement &
-                  Ledger
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase bg-muted px-2 py-1 rounded tracking-tighter">
-                    ID: {tripId}
-                  </span>
-                  <StatusBadge status={trip.status} />
-                </div>
+           
+           {/* Section 1: Logistics & Manifest (Full Width) */}
+           <div className="space-y-8">
+              
+              {/* Route & Logistics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <Card className="p-6 border-none shadow-sm bg-white rounded-3xl">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Route Architecture</p>
+                    <div className="space-y-4 border-l-2 border-slate-100 pl-6 ml-1">
+                       {(trip.routePoints || []).map((p, i, arr) => (
+                          <div key={i} className="relative">
+                             <div className={cn("absolute -left-[31px] top-1 h-3 w-3 rounded-full border-2 border-white shadow-sm", i===0 ? "bg-blue-500" : i===arr.length-1 ? "bg-emerald-500" : "bg-slate-300")} />
+                             <p className="text-[11px] font-black text-slate-800 uppercase tracking-tight">{p}</p>
+                          </div>
+                       ))}
+                    </div>
+                 </Card>
+                 <div className="grid grid-cols-1 gap-4">
+                    <DetailItem label="Schedule" value={new Date(trip.startDate).toLocaleString()} icon={Calendar} colorClass="bg-blue-50 text-blue-600" />
+                    <DetailItem label="Distance" value={`${trip.distanceKm} KM`} icon={MapPin} colorClass="bg-indigo-50 text-indigo-600" />
+                    <DetailItem label="Commercial Rate" value={`₹${trip.ratePerKm} / KM`} icon={IndianRupee} colorClass="bg-emerald-50 text-emerald-600" />
+                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="grid grid-cols-1 xl:grid-cols-3 divide-y xl:divide-y-0 xl:divide-x border-b">
-                {/* Data Entry Area (2/3 width) */}
-                <div className="xl:col-span-2 p-8 bg-white space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Operational Category */}
-                    <div className="space-y-5">
-                      <div className="flex items-center gap-2 pb-2 border-b border-dashed">
-                        <HardDrive className="h-4 w-4 text-primary" />
-                        <span className="text-xs font-black uppercase tracking-widest text-primary">
-                          Direct Operational Costs
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-1 gap-4">
-                        <ExpenseInput
-                          label="Fuel Cost"
-                          value={fuelCost}
-                          setter={setFuelCost}
-                          icon={HardDrive}
-                        />
-                        <ExpenseInput
-                          label="Toll & Entry"
-                          value={tollCharges}
-                          setter={setTollCharges}
-                          icon={MapPin}
-                        />
-                        <ExpenseInput
-                          label="Parking Fees"
-                          value={parkingCharges}
-                          setter={setParkingCharges}
-                          icon={MapPin}
-                        />
-                        <ExpenseInput
-                          label="Cleaning / Sanitization"
-                          value={cleaningCharges}
-                          setter={setCleaningCharges}
-                          icon={CheckCircle2}
-                        />
-                      </div>
-                    </div>
 
-                    {/* Crew & Taxes Category */}
-                    <div className="space-y-5">
-                      <div className="flex items-center gap-2 pb-2 border-b border-dashed">
-                        <Wallet className="h-4 w-4 text-orange-600" />
-                        <span className="text-xs font-black uppercase tracking-widest text-orange-600">
-                          Crew & Statutory Charges
-                        </span>
+              {/* Outstanding Report (Frame 3) */}
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between px-2">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-2">
+                       <Wallet className="h-4 w-4" /> Outstanding Report (Receivables)
+                    </h3>
+                    <p className="text-[10px] font-black text-destructive uppercase">Pending: ₹{collectionPending.toLocaleString()}</p>
+                 </div>
+                 <TableContainer className="rounded-[2.5rem] border-slate-100 bg-white shadow-xl shadow-indigo-500/5 overflow-hidden">
+                    <table className="w-full text-left text-sm">
+                       <thead className="bg-slate-50 border-b text-[10px] font-black uppercase text-destructive tracking-[0.15em]">
+                          <tr>
+                             <th className="px-8 py-5">Customer</th>
+                             <th className="px-6 py-5 text-right">Total Bill</th>
+                             <th className="px-6 py-5 text-right">Paid</th>
+                             <th className="px-6 py-5 text-right">Pending</th>
+                             <th className="px-8 py-5 text-right">Actions</th>
+                          </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-50">
+                          {confirmedManifest.map((b) => {
+                             const pending = b.totalAmount - b.paidAmount;
+                             return (
+                                <tr key={b.id} className="hover:bg-slate-50 transition-colors">
+                                   <td className="px-8 py-5 font-black uppercase text-slate-800">{b.passengers?.[0]?.name || "Rahul Sharma"}</td>
+                                   <td className="px-6 py-5 text-right font-bold text-slate-600">₹{b.totalAmount.toLocaleString()}</td>
+                                   <td className="px-6 py-5 text-right font-bold text-emerald-600">₹{b.paidAmount.toLocaleString()}</td>
+                                   <td className="px-6 py-5 text-right font-black text-destructive bg-destructive/5">₹{pending.toLocaleString()}</td>
+                                   <td className="px-8 py-5 text-right">
+                                       {pending > 0 ? (
+                                          <Button 
+                                             size="sm" 
+                                             variant="outline" 
+                                             className="h-9 px-4 rounded-xl font-black text-[10px] uppercase border-2 border-emerald-500/20 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" 
+                                             onClick={() => {
+                                                setSelectedInquiry(b);
+                                                setApprovalAmount(String(pending));
+                                             }}
+                                          >
+                                             Settle Dues
+                                          </Button>
+                                       ) : (
+                                          <div className="flex justify-end items-center gap-2 text-emerald-600 font-black uppercase text-[10px] tracking-widest px-4">
+                                             <CheckCircle2 className="h-4 w-4" /> Fully Settled
+                                          </div>
+                                       )}
+                                    </td>
+                                </tr>
+                             );
+                          })}
+                          {confirmedManifest.length === 0 && (
+                             <tr>
+                                <td colSpan={5} className="px-8 py-10 text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic opacity-40">No active receivables found</td>
+                             </tr>
+                          )}
+                       </tbody>
+                    </table>
+                 </TableContainer>
+              </div>
+
+              {/* Conclude Trip Section (Frame 4 - Now Horizontal & Full Width) */}
+              {isPast && (
+                <div className="space-y-6 pt-4 border-t-4 border-slate-100">
+                   <div className="flex flex-col md:flex-row md:items-center justify-between px-2 gap-4">
+                      <div>
+                         <h2 className="text-xl font-black uppercase tracking-tight text-slate-900">Conclude Trip</h2>
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Financial Settlement</p>
                       </div>
-                      <div className="grid grid-cols-1 gap-4">
-                        <ExpenseInput
-                          label="Driver Allowance"
-                          value={driverAllowance}
-                          setter={setDriverAllowance}
-                          icon={Wallet}
-                        />
-                        <ExpenseInput
-                          label="Food & Logistics"
-                          value={driverFood}
-                          setter={setDriverFood}
-                          icon={Calculator}
-                        />
-                        <ExpenseInput
-                          label="Border & Entry Tax"
-                          value={stateBorderTax}
-                          setter={setStateBorderTax}
-                          icon={ShieldCheck}
-                        />
-                        <ExpenseInput
-                          label="Accommodation / Hotel"
-                          value={hotelCharges}
-                          setter={setHotelCharges}
-                          icon={Receipt}
-                        />
-                        <ExpenseInput
-                          label="Misc Charges"
-                          value={miscCharges}
-                          setter={setMiscCharges}
-                          icon={Plus}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                      <Button className="h-14 rounded-2xl font-black uppercase tracking-[0.15em] bg-slate-900 shadow-xl px-10 hover:scale-[1.02] transition-transform active:scale-95" onClick={() => toast.success("Trip Records Finalized")}>
+                         Finalize Trip & Close Dossier
+                      </Button>
+                   </div>
+
+                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Collection Breakdown */}
+                      <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8">
+                         <div className="space-y-6">
+                            <div className="flex justify-between items-center">
+                               <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                                  <CreditCard className="h-3 w-3" /> Total Collection
+                               </p>
+                               <span className="bg-emerald-50 text-emerald-600 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-widest border border-emerald-100">Auto Generated</span>
+                            </div>
+
+                            <div className="space-y-3">
+                               <div className="flex justify-between items-center text-sm font-bold text-slate-600">
+                                  <span className="uppercase tracking-tight">Booking Value (Paid)</span>
+                                  <span>₹{collectionPaid.toLocaleString()}</span>
+                               </div>
+                               <div className="flex justify-between items-center text-sm font-bold text-destructive">
+                                  <span className="uppercase tracking-tight">Pending Dues</span>
+                                  <span>+ ₹{collectionPending.toLocaleString()}</span>
+                               </div>
+                               <div className="pt-2 border-t border-dashed flex justify-between items-center">
+                                  <span className="text-[11px] font-black uppercase tracking-widest text-slate-900">Gross Collection</span>
+                                  <span className="text-xl font-black text-slate-900">₹{collectionTotal.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            {/* Optional Charges Frame */}
+                            <div className="p-5 rounded-[2rem] border-2 border-slate-200 bg-slate-50/50 space-y-3 relative">
+                               <span className="absolute -top-2.5 left-6 bg-white px-3 text-[9px] font-black uppercase tracking-widest text-slate-400 border rounded-full">Add-on Frame</span>
+                               <div className="flex justify-between items-center text-[11px] font-bold text-blue-600">
+                                  <span className="flex items-center gap-2"><MapPin className="h-3 w-3" /> Toll Charges</span>
+                                  <span>₹450</span>
+                               </div>
+                               <div className="flex justify-between items-center text-[11px] font-bold text-blue-600">
+                                  <span className="flex items-center gap-2"><User className="h-3 w-3" /> Driver Allowance</span>
+                                  <span>₹300</span>
+                               </div>
+                               <div className="flex justify-between items-center text-[11px] font-bold text-blue-600">
+                                  <span className="flex items-center gap-2"><ShieldCheck className="h-3 w-3" /> Hotel Charges</span>
+                                  <span>₹300</span>
+                               </div>
+                            </div>
+                         </div>
+                      </Card>
+
+                      {/* Expenditure Dossier */}
+                      <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8">
+                         <div className="space-y-4">
+                            <p className="text-[10px] font-black text-destructive uppercase tracking-widest flex items-center justify-between">
+                               Expenditure Dossier
+                               <span className="text-[8px] opacity-50">Operational Costs</span>
+                            </p>
+                            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin">
+                               {[
+                                 { name: "Fuel (diesel/petrol)", amount: 45000, color: "bg-red-50 text-red-600" },
+                                 { name: "Toll charges", amount: 4500, color: "bg-orange-50 text-orange-600" },
+                                 { name: "Driver food", amount: 1500, color: "bg-amber-50 text-amber-600" },
+                                 { name: "Parking charges", amount: 800, color: "bg-yellow-50 text-yellow-600" },
+                                 { name: "State border tax", amount: 2200, color: "bg-rose-50 text-rose-600" },
+                                 { name: "Police entry tax", amount: 500, color: "bg-pink-50 text-pink-600" },
+                                 { name: "Cleaning charges during trip", amount: 500, color: "bg-slate-50 text-slate-600" },
+                               ].map((exp, i) => (
+                                  <div key={i} className={cn("flex justify-between items-center p-3 rounded-xl border border-transparent hover:border-slate-200 transition-all", exp.color)}>
+                                     <span className="text-[10px] font-black uppercase tracking-tight">{exp.name}</span>
+                                     <span className="text-xs font-black">₹{exp.amount.toLocaleString()}</span>
+                                  </div>
+                               ))}
+                            </div>
+                            <div className="flex justify-between items-center p-5 bg-destructive text-white rounded-[1.5rem] shadow-xl shadow-destructive/20 border-t-4 border-white/10">
+                               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Total Expenses</span>
+                               <span className="text-2xl font-black">₹{totalExpenses.toLocaleString()}</span>
+                            </div>
+                         </div>
+                      </Card>
+
+                      {/* Net Cash Profit */}
+                      <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 flex flex-col justify-between">
+                         <div className="pt-6">
+                            <div className={cn("p-10 rounded-[3rem] flex flex-col items-center text-center relative overflow-hidden", actualCashProfit >= 0 ? "bg-blue-600 shadow-2xl shadow-blue-200" : "bg-destructive shadow-2xl shadow-destructive-200")}>
+                               <div className="absolute top-0 right-0 p-4 opacity-10">
+                                  <TrendingUp className="h-24 w-24 text-white" />
+                               </div>
+                               <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.3em] mb-4 relative z-10">Net Cash Profit</p>
+                               <p className="text-6xl font-black text-white tracking-tighter mb-2 relative z-10">₹{actualCashProfit.toLocaleString()}</p>
+                               <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest italic flex items-center gap-1 relative z-10">
+                                  <MinusCircle className="h-3 w-3" /> ? minus the pending
+                               </p>
+                            </div>
+                         </div>
+                         <div className="mt-8 p-6 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
+                            <div className="flex justify-between items-center mb-2">
+                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Potential (On Paper)</p>
+                               <p className="text-sm font-black text-blue-600">₹{bookProfit.toLocaleString()}</p>
+                            </div>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase leading-relaxed italic">
+                               * Potential profit represents the total book value minus expenses, assuming 100% collection of pending dues.
+                            </p>
+                         </div>
+                      </Card>
+                   </div>
                 </div>
+              )}
 
-                {/* Financial Statement Area (1/3 width) */}
-                <div className="p-8 bg-muted/5 space-y-8">
-                  <div className="flex items-center gap-2 pb-2 border-b border-dashed">
-                    <TrendingUp className="h-4 w-4 text-emerald-600" />
-                    <span className="text-xs font-black uppercase tracking-widest text-emerald-600">
-                      Trip Balance Sheet
-                    </span>
-                  </div>
+              {/* Booking Inquiries (Pending Approval) */}
+              {inquiries.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-amber-600 px-2 flex items-center gap-2">
+                    <Users className="h-4 w-4" /> Pending Approval Queue
+                  </h3>
+                  <TableContainer className="rounded-[2.5rem] border-amber-100 bg-amber-50/10 border-2 overflow-hidden shadow-xl shadow-amber-500/5">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-amber-100/50 border-b text-[10px] font-black uppercase text-amber-700 tracking-widest">
+                        <tr>
+                          <th className="px-8 py-5">Customer Entity</th>
+                          <th className="px-6 py-5">Contact</th>
+                          <th className="px-6 py-5 text-center">Seats Requested</th>
+                          <th className="px-6 py-5 text-right">Potential Revenue</th>
+                          <th className="px-8 py-5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-amber-100/50">
+                        {inquiries.map((b) => (
+                          <tr key={b.id} className="hover:bg-amber-100/20 transition-colors">
+                            <td className="px-8 py-5">
+                               <p className="font-black uppercase text-slate-800">{b.passengers?.[0]?.name}</p>
+                               <p className="text-[8px] font-black text-amber-600 uppercase tracking-widest">Inquiry ID #{b.id}</p>
+                            </td>
+                            <td className="px-6 py-5 text-slate-600 font-bold">{b.passengers?.[0]?.mobileNo}</td>
+                            <td className="px-6 py-5 text-center">
+                               <span className="bg-amber-200/50 text-amber-700 px-3 py-1 rounded-full text-[10px] font-black">{b.seatsBooked} SEATS</span>
+                            </td>
+                            <td className="px-6 py-5 text-right font-black text-slate-900">₹{b.totalAmount.toLocaleString()}</td>
+                            <td className="px-8 py-5 text-right flex justify-end gap-2">
+                               <Button variant="ghost" size="sm" className="text-destructive font-black uppercase text-[10px]" onClick={() => toast.error("Booking Rejected")}>Reject</Button>
+                               <Button size="sm" className="bg-amber-600 text-white font-black uppercase text-[10px] px-6 h-9 rounded-xl" onClick={() => {
+                                  setSelectedInquiry(b);
+                                  setApprovalAmount(String(b.totalAmount));
+                               }}>Review & Approve</Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </TableContainer>
+                </div>
+              )}
 
-                  <div className="space-y-6">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-sm font-bold">
-                        <span className="text-muted-foreground uppercase tracking-wider text-[10px]">
-                          Gross Revenue
-                        </span>
-                        <span className="text-emerald-600">
-                          ₹{totalRevenue.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm font-bold">
-                        <span className="text-muted-foreground uppercase tracking-wider text-[10px]">
-                          Total Outflow
-                        </span>
-                        <span className="text-destructive">
-                          ₹{totalExpenses.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="h-px bg-border my-2" />
-                      <div className="flex flex-col gap-1">
-                        <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-black">
-                          Net Margin
-                        </span>
-                        <div
-                          className={cn(
-                            "p-4 rounded-xl flex items-center justify-between shadow-inner",
-                            totalRevenue - totalExpenses >= 0
-                              ? "bg-emerald-50 border border-emerald-100"
-                              : "bg-destructive/5 border border-destructive/10",
-                          )}
-                        >
-                          <p
-                            className={cn(
-                              "text-3xl font-black tracking-tighter",
-                              totalRevenue - totalExpenses >= 0
-                                ? "text-emerald-700"
-                                : "text-destructive",
-                            )}
-                          >
-                            ₹{(totalRevenue - totalExpenses).toLocaleString()}
-                          </p>
-                          {totalRevenue - totalExpenses >= 0 ? (
-                            <TrendingUp className="h-6 w-6 text-emerald-400" />
-                          ) : (
-                            <AlertCircle className="h-6 w-6 text-destructive/30" />
-                          )}
+              {/* Trip Settlement Record (Frame 6) */}
+              {settlementData && (
+                <div className="space-y-4 pt-8">
+                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 px-2 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" /> Trip Settlement Record
+                  </h3>
+                  <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+                     <div className="bg-emerald-600 p-8 text-white flex justify-between items-center">
+                        <div>
+                           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1">Financial Dossier</p>
+                           <h4 className="text-2xl font-black tracking-tighter uppercase">Finalized Settlement</h4>
                         </div>
-                        <p className="text-[10px] text-muted-foreground font-medium mt-1">
-                          Calculated Margin:{" "}
-                          {Math.round(
-                            ((totalRevenue - totalExpenses) /
-                              (totalRevenue || 1)) *
-                              100,
-                          )}
-                          %
-                        </p>
-                      </div>
-                    </div>
+                        <div className="text-right">
+                           <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Total Collection</p>
+                           <p className="text-3xl font-black">₹{settlementData.totalCollection?.toLocaleString()}</p>
+                        </div>
+                     </div>
+                     <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="space-y-4">
+                           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b pb-2">Operational Burn</p>
+                           <div className="space-y-3">
+                              <div className="flex justify-between items-center">
+                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Fuel (Diesel)</span>
+                                 <span className="text-sm font-black text-slate-900">₹{settlementData.fuel || '0'}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Toll Charges</span>
+                                 <span className="text-sm font-black text-slate-900">₹{settlementData.tolls || '0'}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Parking</span>
+                                 <span className="text-sm font-black text-slate-900">₹{settlementData.parking || '0'}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Cleaning</span>
+                                 <span className="text-sm font-black text-slate-900">₹{settlementData.cleaning || '0'}</span>
+                              </div>
+                           </div>
+                        </div>
 
-                    <div className="space-y-3 pt-6 border-t border-dashed">
-                      <Button
-                        className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg bg-primary hover:bg-primary/90 transition-all text-xs"
-                        onClick={() => toast.success("Settlement Completed")}
-                      >
-                        Finalize Settlement
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="w-full h-10 rounded-xl font-bold text-muted-foreground hover:text-primary transition-all text-xs"
-                        onClick={() =>
-                          toast.info("Syncing ledger with cloud...")
-                        }
-                      >
-                        Save as Draft
-                      </Button>
-                    </div>
-                  </div>
+                        <div className="space-y-4">
+                           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b pb-2">Taxes & Logistics</p>
+                           <div className="space-y-3">
+                              <div className="flex justify-between items-center">
+                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">State Border</span>
+                                 <span className="text-sm font-black text-slate-900">₹{settlementData.stateTax || '0'}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Police Entry</span>
+                                 <span className="text-sm font-black text-slate-900">₹{settlementData.policeTax || '0'}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Food / Hotel</span>
+                                 <span className="text-sm font-black text-slate-900">₹{settlementData.foodHotel || '0'}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Allowance</span>
+                                 <span className="text-sm font-black text-slate-900">₹{settlementData.allowance || '0'}</span>
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className="bg-slate-50 p-6 rounded-[2rem] flex flex-col justify-center items-center text-center border border-dashed border-slate-200">
+                           <ShieldCheck className="h-10 w-10 text-emerald-600 mb-3" />
+                           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Final Status</p>
+                           <p className="text-xl font-black text-emerald-600 uppercase">Settled</p>
+                           <p className="text-[8px] font-bold text-slate-400 mt-2 italic">
+                              Finalized on {new Date(settlementData.finalizedAt).toLocaleDateString()}
+                           </p>
+                        </div>
+                     </div>
+                  </Card>
                 </div>
-              </div>
-              <div className="bg-muted/30 p-4 border-t flex items-center justify-center gap-3 text-[10px] text-muted-foreground font-medium italic">
-                <History className="h-3.5 w-3.5" />
-                Last updated on {new Date().toLocaleDateString()} at{" "}
-                {new Date().toLocaleTimeString()} • All finances are subject to
-                audit.
-              </div>
-            </CardContent>
-          </Card>
+              )}
+           </div>
         </div>
+
+        {/* Approval Dialog */}
+        <Dialog open={!!selectedInquiry} onOpenChange={(open) => !open && setSelectedInquiry(null)}>
+           <DialogContent className="sm:max-w-md rounded-[2.5rem] border-none shadow-2xl">
+              <DialogHeader>
+                 <DialogTitle className="text-xl font-black uppercase tracking-tight">Manual Payment Verification</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6 py-4">
+                 <div className="p-4 bg-muted/30 rounded-2xl space-y-2">
+                    <div className="flex justify-between text-xs">
+                       <span className="font-bold text-muted-foreground uppercase">Customer</span>
+                       <span className="font-black">{selectedInquiry?.passengers?.[0]?.name}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                       <span className="font-bold text-muted-foreground uppercase">Quoted Total</span>
+                       <span className="font-black text-primary">₹{selectedInquiry?.totalAmount?.toLocaleString()}</span>
+                    </div>
+                 </div>
+                 <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Input Cash / Paid Amount</Label>
+                    <div className="relative">
+                       <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                       <Input type="number" value={approvalAmount} onChange={(e) => setApprovalAmount(e.target.value)} className="h-12 pl-10 border-2 rounded-xl font-black text-lg" placeholder="0.00" />
+                    </div>
+                 </div>
+              </div>
+              <DialogFooter className="sm:justify-between gap-3">
+                 <Button variant="ghost" className="font-bold uppercase text-[10px]" onClick={() => setSelectedInquiry(null)}>Cancel</Button>
+                 <Button className="bg-emerald-600 font-black uppercase tracking-widest px-8" onClick={handleApprove}>Approve & Settle</Button>
+              </DialogFooter>
+           </DialogContent>
+        </Dialog>
+
       </PageLayout>
     </DashboardLayout>
   );

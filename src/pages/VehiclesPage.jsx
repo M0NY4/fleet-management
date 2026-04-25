@@ -1,15 +1,15 @@
 import { useEffect, useState, useMemo } from "react";
+import { Truck } from "lucide-react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getVehicles } from "@/lib/api";
-import { VehicleStatsCards } from "@/components/vehicles/VehicleStatsCards";
 import { VehicleFilters } from "@/components/vehicles/VehicleFilters";
-import { VehicleTable } from "@/components/vehicles/VehicleTable";
+import { VehicleCard } from "@/components/vehicles/VehicleCard";
+import { VehicleDetailsModal } from "@/components/vehicles/VehicleDetailsModal";
 import { Pagination } from "@/components/vehicles/Pagination";
 import { DeleteConfirmModal } from "@/components/vehicles/DeleteConfirmModal";
 import { AddVehicleModal } from "@/components/vehicles/AddVehicleModal";
-import { VehicleDocumentsModal } from "@/components/vehicles/VehicleDocumentsModal";
 import { toast } from "sonner";
 
 export default function VehiclesPage() {
@@ -18,7 +18,6 @@ export default function VehiclesPage() {
   
   // Filter States
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
   const [fuelFilter, setFuelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   
@@ -33,9 +32,9 @@ export default function VehiclesPage() {
   // Add Modal State
   const [addModalOpen, setAddModalOpen] = useState(false);
 
-  // View Document Modal State
-  const [viewDocsModalOpen, setViewDocsModalOpen] = useState(false);
-  const [vehicleToView, setVehicleToView] = useState(null);
+  // View Detail Modal State
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -49,16 +48,15 @@ export default function VehiclesPage() {
     return data.filter((v) => {
       const matchSearch = 
         v.number.toLowerCase().includes(search.toLowerCase()) ||
-        v.brand.toLowerCase().includes(search.toLowerCase()) ||
+        v.manufacturer.toLowerCase().includes(search.toLowerCase()) ||
         v.model.toLowerCase().includes(search.toLowerCase());
       
-      const matchType = typeFilter === "all" || v.type === typeFilter;
-      const matchFuel = fuelFilter === "all" || v.fuel === fuelFilter;
+      const matchFuel = fuelFilter === "all" || v.fuelType === fuelFilter;
       const matchStatus = statusFilter === "all" || v.status === statusFilter;
 
-      return matchSearch && matchType && matchFuel && matchStatus;
+      return matchSearch && matchFuel && matchStatus;
     });
-  }, [data, search, typeFilter, fuelFilter, statusFilter]);
+  }, [data, search, fuelFilter, statusFilter]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -69,7 +67,6 @@ export default function VehiclesPage() {
 
   const handleReset = () => {
     setSearch("");
-    setTypeFilter("all");
     setFuelFilter("all");
     setStatusFilter("all");
     setCurrentPage(1);
@@ -80,36 +77,35 @@ export default function VehiclesPage() {
     setAddModalOpen(true);
   };
 
-  const handleDeleteClick = (v) => {
-    setVehicleToDelete(v);
-    setDeleteModalOpen(true);
+  const handleVehicleClick = (v) => {
+    setSelectedVehicle(v);
+    setDetailModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (!vehicleToDelete) return;
-    setData(prev => prev.filter(v => v.id !== vehicleToDelete.id));
-    setDeleteModalOpen(false);
-    toast.success(`Vehicle ${vehicleToDelete.number} decommissioned successfully`);
-    setVehicleToDelete(null);
-  };
+  const statusCounts = useMemo(() => {
+    return {
+      all: data.length,
+      Active: data.filter(v => v.status === "Active").length,
+      Maintenance: data.filter(v => v.status === "Maintenance").length,
+      "In Service": data.filter(v => v.status === "In Service").length,
+    };
+  }, [data]);
 
   return (
     <DashboardLayout>
       <PageLayout>
         <PageHeader 
-          title="Vehicles Management" 
-          description="Manage and monitor your fleet vehicles, maintenance schedules, and availability." 
+          title="Fleet Management" 
+          description="Monitor and manage your vehicle assets, compliance, and operational status." 
           actionLabel="Add Vehicle" 
           onAction={handleAddVehicle} 
         />
         
-        <VehicleStatsCards vehicles={data} />
-        
         <VehicleFilters 
           search={search} setSearch={setSearch}
-          typeFilter={typeFilter} setTypeFilter={setTypeFilter}
           fuelFilter={fuelFilter} setFuelFilter={setFuelFilter}
           statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+          statusCounts={statusCounts}
           onReset={handleReset}
         />
         
@@ -117,22 +113,29 @@ export default function VehiclesPage() {
           <div className="bg-white rounded-xl shadow-sm border h-96 flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Loading Fleet Data...</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Synchronizing Fleet...</p>
             </div>
           </div>
         ) : (
           <>
-            <VehicleTable 
-              vehicles={paginatedData} 
-              onDelete={handleDeleteClick}
-              onEdit={(v) => toast.info(`Editing ${v.number}`)}
-              onView={(v) => {
-                setVehicleToView(v);
-                setViewDocsModalOpen(true);
-              }}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {paginatedData.map((v) => (
+                <VehicleCard 
+                  key={v.id} 
+                  vehicle={v} 
+                  onClick={handleVehicleClick}
+                />
+              ))}
+            </div>
+
+            {filteredData.length === 0 && (
+               <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-primary/20">
+                  <Truck className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                  <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">No matching vehicles found</p>
+               </div>
+            )}
             
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-8">
               <Pagination 
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -142,11 +145,10 @@ export default function VehiclesPage() {
               />
             </div>
 
-            <DeleteConfirmModal 
-              open={deleteModalOpen}
-              onOpenChange={setDeleteModalOpen}
-              onConfirm={confirmDelete}
-              vehicleNumber={vehicleToDelete?.number}
+            <VehicleDetailsModal 
+              open={detailModalOpen}
+              onOpenChange={setDetailModalOpen}
+              vehicle={selectedVehicle}
             />
 
             <AddVehicleModal 
@@ -154,14 +156,19 @@ export default function VehiclesPage() {
               onOpenChange={setAddModalOpen}
               onAdd={(newVehicle) => {
                 setData(prev => [newVehicle, ...prev]);
-                toast.success(`Vehicle ${newVehicle.number} added successfully`);
+                toast.success(`Vehicle ${newVehicle.number} added to fleet`);
               }}
             />
 
-            <VehicleDocumentsModal
-              open={viewDocsModalOpen}
-              onOpenChange={setViewDocsModalOpen}
-              vehicle={vehicleToView}
+            <DeleteConfirmModal 
+              open={deleteModalOpen}
+              onOpenChange={setDeleteModalOpen}
+              onConfirm={() => {
+                setData(prev => prev.filter(v => v.id !== vehicleToDelete.id));
+                setDeleteModalOpen(false);
+                toast.success(`Vehicle ${vehicleToDelete.number} removed`);
+              }}
+              vehicleNumber={vehicleToDelete?.number}
             />
           </>
         )}
@@ -169,3 +176,4 @@ export default function VehiclesPage() {
     </DashboardLayout>
   );
 }
+

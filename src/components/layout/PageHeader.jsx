@@ -11,7 +11,7 @@ export function PageHeader({ title, description, actionLabel, onAction, classNam
       </div>
       {actionLabel && onAction && (
         <Button onClick={onAction} size="sm" className="rounded-lg px-4 py-2">
-          {actionLabel !== "Create Booking" && <Plus className="h-4 w-4 mr-1" />}
+          {actionLabel !== "Create Trip" && <Plus className="h-4 w-4 mr-1" />}
           {actionLabel}
         </Button>
       )}

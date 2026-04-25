@@ -30,3 +30,4 @@ export const getTripsPerRouteData = () => fetchData("trips_per_route");
 export const getVehicleDocuments = () => fetchData("vehicle_documents");
 export const getDriverDocuments = () => fetchData("driver_documents");
 export const getCustomerBookings = () => fetchData("customer_bookings");
+export const getBookings = () => fetchData("bookings");

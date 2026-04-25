@@ -6,9 +6,9 @@ import { FilterBar } from "@/components/layout/FilterBar";
 
 export function VehicleFilters({ 
   search, setSearch, 
-  typeFilter, setTypeFilter, 
   fuelFilter, setFuelFilter, 
   statusFilter, setStatusFilter,
+  statusCounts = {},
   onReset 
 }) {
   return (
@@ -25,31 +25,15 @@ export function VehicleFilters({
 
       <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
         <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-xl border flex-wrap md:flex-nowrap">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[120px] h-9 border-none bg-transparent shadow-none focus:ring-0 text-xs font-bold uppercase">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="Car">Car</SelectItem>
-              <SelectItem value="Bus">Bus</SelectItem>
-              <SelectItem value="Van">Van</SelectItem>
-              <SelectItem value="Mini">Mini</SelectItem>
-              <SelectItem value="Coach">Coach</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="hidden md:block h-4 w-px bg-border" />
-
           <Select value={fuelFilter} onValueChange={setFuelFilter}>
             <SelectTrigger className="w-[120px] h-9 border-none bg-transparent shadow-none focus:ring-0 text-xs font-bold uppercase">
               <SelectValue placeholder="Fuel" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="all">All Fuel</SelectItem>
-              <SelectItem value="Petrol">Petrol</SelectItem>
-              <SelectItem value="Diesel">Diesel</SelectItem>
-              <SelectItem value="Electric">Electric</SelectItem>
+              <SelectItem value="PETROL">Petrol</SelectItem>
+              <SelectItem value="DIESEL">Diesel</SelectItem>
+              <SelectItem value="ELECTRIC">Electric</SelectItem>
             </SelectContent>
           </Select>
 
@@ -60,10 +44,10 @@ export function VehicleFilters({
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Maintenance">Maintenance</SelectItem>
-              <SelectItem value="In Service">In Service</SelectItem>
+              <SelectItem value="all">All Status ({statusCounts.all || 0})</SelectItem>
+              <SelectItem value="Active">Active ({statusCounts.Active || 0})</SelectItem>
+              <SelectItem value="Maintenance">Maintenance ({statusCounts.Maintenance || 0})</SelectItem>
+              <SelectItem value="In Service">In Service ({statusCounts["In Service"] || 0})</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -24,16 +24,14 @@ const driverItems = [
 ];
 
 const tripItems = [
-  { title: "Create Booking", url: "/create-booking", icon: PlusCircle },
-  { title: "Trip List", url: "/trips", icon: List },
+  { title: "Trips", url: "/trips", icon: List },
 ];
 
 
 
 const otherItems = [
-  { title: "Payments", url: "/payments", icon: IndianRupee },
+  { title: "Financial Management", url: "/finance", icon: Wallet },
   { title: "Notifications", url: "/notifications", icon: Bell },
-  { title: "Accounts / Finance", url: "/finance", icon: Wallet },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];
 
