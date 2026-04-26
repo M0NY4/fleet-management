@@ -44,7 +44,7 @@ export function AddDriverModal({ open, onOpenChange, onAdd }) {
     const newDriver = {
       id: Date.now(),
       ...formData,
-      status: "Active",
+      status: "ACTIVE",
       image: formData.image || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=400"
     };
 

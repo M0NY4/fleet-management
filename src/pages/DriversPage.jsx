@@ -54,7 +54,7 @@ export default function DriversPage() {
            <div className="relative flex-1 max-w-sm">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
              <Input 
-                placeholder="Search drivers by name, phone or ID..." 
+                placeholder="Search drivers by name or phone..." 
                 className="pl-10 h-11 border-none bg-white shadow-sm rounded-xl font-medium"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

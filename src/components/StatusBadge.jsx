@@ -1,6 +1,12 @@
 import { cn } from "@/lib/utils";
 
 const statusStyles = {
+  AVAILABLE: "bg-success/20 text-success border-success/30",
+  ACTIVE: "bg-success/20 text-success border-success/30",
+  "ON TRIP": "bg-indigo-500/20 text-indigo-600 border-indigo-500/30 animate-pulse",
+  MAINTENANCE: "bg-amber-500/20 text-amber-600 border-amber-500/30",
+  INACTIVE: "bg-muted text-muted-foreground border-border",
+  VALID: "bg-success/20 text-success border-success/30",
   Active: "bg-success/20 text-success border-success/30",
   Valid: "bg-success/20 text-success border-success/30",
   Completed: "bg-success/20 text-success border-success/30",

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Users, ChevronRight, IndianRupee, TrendingUp, Share2, Plus, Phone, User, CreditCard, Ticket, Clock } from "lucide-react";
+import { MapPin, Calendar, Users, ChevronRight, IndianRupee, TrendingUp, Share2, Plus, Phone, User, CreditCard, Ticket, Clock, Receipt, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -141,141 +141,51 @@ export function TripCard({ trip, onClick }) {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col gap-4 pt-4 border-t border-border/40">
-          <div className="flex items-center justify-between gap-2">
-            {!isPast && (
-               <>
-                 <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
-                   <DialogTrigger asChild>
-                     <Button 
-                       variant="outline" 
-                       size="sm" 
-                       className="rounded-lg h-8 px-3 text-[10px] font-black uppercase tracking-widest border-2 border-primary/20 text-primary hover:bg-primary hover:text-white transition-all shrink-0"
-                       onClick={(e) => e.stopPropagation()}
-                     >
-                       <Plus className="h-3 w-3 mr-1.5" /> Add Booking
-                     </Button>
-                   </DialogTrigger>
-                   <DialogContent className="sm:max-w-md rounded-[2.5rem]" onClick={(e) => e.stopPropagation()}>
-                     <DialogHeader>
-                       <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
-                         <Ticket className="h-5 w-5 text-primary" /> Internal Booking Form
-                       </DialogTitle>
-                     </DialogHeader>
-                     <div className="space-y-4 py-4">
-                       <div className="grid grid-cols-2 gap-4">
-                         <div className="space-y-1.5">
-                           <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Customer Name</Label>
-                           <div className="relative">
-                             <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                             <Input 
-                               placeholder="Name" className="h-10 pl-9 border-2 rounded-xl font-bold" 
-                               value={bookingForm.customer_name}
-                               onChange={(e) => setBookingForm({...bookingForm, customer_name: e.target.value})}
-                             />
-                           </div>
-                         </div>
-                         <div className="space-y-1.5">
-                           <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Customer No.</Label>
-                           <div className="relative">
-                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                             <Input 
-                               placeholder="Phone" className="h-10 pl-9 border-2 rounded-xl font-bold" 
-                               value={bookingForm.customer_no}
-                               onChange={(e) => setBookingForm({...bookingForm, customer_no: e.target.value})}
-                             />
-                           </div>
-                         </div>
-                       </div>
-
-                       <div className="grid grid-cols-2 gap-4">
-                         <div className="space-y-1.5">
-                           <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Seats Booked</Label>
-                           <Input 
-                             type="number" min="1" max={trip.seatsRemaining} className="h-10 border-2 rounded-xl font-black" 
-                             value={bookingForm.seats_booked}
-                             onChange={(e) => setBookingForm({...bookingForm, seats_booked: parseInt(e.target.value) || 1})}
-                           />
-                         </div>
-                         <div className="space-y-1.5">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Payment Method</Label>
-                            <Select value={bookingForm.payment_method} onValueChange={(val) => setBookingForm({...bookingForm, payment_method: val})}>
-                               <SelectTrigger className="h-10 border-2 rounded-xl font-bold">
-                                  <SelectValue />
-                               </SelectTrigger>
-                               <SelectContent>
-                                  <SelectItem value="GPAY">G-PAY</SelectItem>
-                                  <SelectItem value="CASH">CASH</SelectItem>
-                                  <SelectItem value="PROOF_UPLOAD">PROOF UPLOAD</SelectItem>
-                               </SelectContent>
-                            </Select>
-                         </div>
-                       </div>
-
-                       <div className="bg-muted/30 p-4 rounded-2xl space-y-2 border border-dashed">
-                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                             <span>Total Amount</span>
-                             <span className="text-primary">₹{totalBookingAmount.toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                             <span>Pending Balance</span>
-                             <span className={cn(pendingBookingAmount > 0 ? "text-destructive" : "text-emerald-600")}>₹{pendingBookingAmount.toLocaleString()}</span>
-                          </div>
-                       </div>
-
-                       <div className="space-y-1.5">
-                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Cash / Paid Amount</Label>
-                         <div className="relative">
-                           <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                           <Input 
-                             type="number" placeholder="0.00" className="h-12 pl-9 border-2 rounded-xl font-black text-lg" 
-                             value={bookingForm.paid_amount}
-                             onChange={(e) => setBookingForm({...bookingForm, paid_amount: e.target.value})}
-                           />
-                         </div>
-                       </div>
-                     </div>
-                     <DialogFooter>
-                       <Button className="w-full h-12 rounded-xl bg-primary font-black uppercase tracking-widest" onClick={handleManualBooking}>Log Internal Booking</Button>
-                     </DialogFooter>
-                   </DialogContent>
-                 </Dialog>
-
-                 <Button 
-                   variant="outline" 
-                   size="sm" 
-                   className="rounded-lg h-8 px-3 text-[10px] font-black uppercase tracking-widest border-dashed hover:bg-primary/5 hover:text-primary transition-all shrink-0"
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     const url = `${window.location.origin}/public/booking/${trip.id}`;
-                     navigator.clipboard.writeText(url);
-                     toast.success("Booking Link Copied", { description: "You can now share this link with customers." });
-                   }}
-                 >
-                   <Share2 className="h-3 w-3 mr-1.5" /> Share
-                 </Button>
-               </>
-            )}
-            <FinancialSettlementModal 
-              trip={trip}
-              trigger={
-                <div 
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg flex items-center gap-2 flex-1 justify-center cursor-pointer transition-all hover:scale-105",
-                    displayProfit >= 0 ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-destructive/5 text-destructive hover:bg-destructive/10"
-                  )}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <TrendingUp className="h-3.5 w-3.5" />
-                  <span className="text-[10px] font-black tracking-widest uppercase">
-                    Conclude Settlement
-                  </span>
-                </div>
-              }
-            />
-            <Button variant="secondary" size="sm" className="rounded-lg font-bold group-hover:bg-primary group-hover:text-primary-foreground transition-all h-8 text-xs px-4 shrink-0">
-              Details <ChevronRight className="h-3.5 w-3.5 ml-1" />
+        <div className="mt-4 pt-3 border-t border-slate-50 space-y-2">
+          <div className="flex gap-1.5">
+            <Button 
+              variant="outline" 
+              className="flex-1 h-9 rounded-lg font-black uppercase text-[8px] tracking-tighter border-2 border-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all px-1"
+              onClick={(e) => { e.stopPropagation(); navigate(`/trips/${trip.id}/expenses`); }}
+            >
+              <Receipt className="h-3 w-3 mr-1" /> Expenses
             </Button>
+            <Button 
+              variant="outline" 
+              className="flex-1 h-9 rounded-lg font-black uppercase text-[8px] tracking-tighter border-2 border-slate-900/5 text-slate-900 hover:bg-slate-900 hover:text-white transition-all px-1"
+              onClick={(e) => { e.stopPropagation(); navigate(`/trips/${trip.id}/bookings`); }}
+            >
+              <Ticket className="h-3 w-3 mr-1" /> Bookings
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex-1 h-9 rounded-lg font-black uppercase text-[8px] tracking-tighter border-2 border-indigo-500/5 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all px-1"
+              onClick={(e) => { e.stopPropagation(); navigate(`/finance?tripId=${trip.id}`); }}
+            >
+              <TrendingUp className="h-3 w-3 mr-1" /> Summary
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+             <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-9 w-9 rounded-lg border-2 border-slate-50 text-slate-400 hover:bg-slate-50 shrink-0"
+                onClick={(e) => {
+                   e.stopPropagation();
+                   const url = `${window.location.origin}/public/booking/${trip.id}`;
+                   navigator.clipboard.writeText(url);
+                   toast.success("Share link copied");
+                }}
+             >
+                <Share2 className="h-3.5 w-3.5" />
+             </Button>
+             <Button 
+                className="flex-1 h-9 rounded-lg bg-[#3E85A8] hover:bg-[#347291] text-white font-black uppercase text-[9px] tracking-widest shadow-md flex items-center justify-center gap-2"
+                onClick={() => navigate(`/trips/${trip.id}/logistics`)}
+             >
+                Details <ChevronRight className="h-3.5 w-3.5" />
+             </Button>
           </div>
         </div>
       </div>

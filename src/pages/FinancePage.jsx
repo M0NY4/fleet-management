@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -21,6 +21,8 @@ import { FinancialSettlementModal } from "@/components/finance/FinancialSettleme
 
 export default function FinancePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tripIdParam = searchParams.get("tripId");
   const [activeTab, setActiveTab] = useState("ledger");
   const [transactions, setTransactions] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -95,6 +97,30 @@ export default function FinancePage() {
   const totalBilled = useMemo(() => payments.reduce((s, p) => s + p.totalBill, 0), [payments]);
   const totalCollected = useMemo(() => payments.reduce((s, p) => s + p.paidAmount, 0), [payments]);
   const totalOutstanding = useMemo(() => payments.reduce((s, p) => s + p.pendingAmount, 0), [payments]);
+
+  const displayIncome = useMemo(() => {
+    if (tripIdParam) {
+      return tripWiseData.filter(t => String(t.id) === String(tripIdParam)).reduce((s, t) => s + t.collection, 0);
+    }
+    return totalIncome;
+  }, [tripIdParam, totalIncome, tripWiseData]);
+
+  const displayExpense = useMemo(() => {
+    if (tripIdParam) {
+      return tripWiseData.filter(t => String(t.id) === String(tripIdParam)).reduce((s, t) => s + t.expenses, 0);
+    }
+    return totalExpense;
+  }, [tripIdParam, totalExpense, tripWiseData]);
+
+  const displayProfit = displayIncome - displayExpense;
+
+  const displayPending = useMemo(() => {
+    if (tripIdParam) {
+      const tripName = tripWiseData.find(t => String(t.id) === String(tripIdParam))?.name;
+      return payments.filter(p => p.tripName === tripName).reduce((s, p) => s + p.pendingAmount, 0);
+    }
+    return totalOutstanding;
+  }, [tripIdParam, totalOutstanding, payments, tripWiseData]);
 
   const filteredPayments = useMemo(() => 
     paymentFilter === "all" ? payments : payments.filter((p) => p.status === paymentFilter),
@@ -190,80 +216,146 @@ export default function FinancePage() {
   return (
     <DashboardLayout>
       <PageLayout fullWidth>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-           <PageHeader title="Financial Management" description="Trip-wise Profitability & Receivables Tracking" />
-           <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1 shadow-inner self-start md:self-center">
-              <Button 
-                 variant={activeTab === "ledger" ? "default" : "ghost"} 
-                 className={cn("h-11 rounded-xl font-black uppercase text-[10px] tracking-widest px-6 shadow-sm", activeTab === "ledger" ? "bg-slate-900" : "text-slate-500")}
-                 onClick={() => setActiveTab("ledger")}
-              >
-                 <Receipt className="h-4 w-4 mr-2" /> Trip-Wise Ledger
-              </Button>
-              <Button 
-                 variant={activeTab === "outstanding" ? "default" : "ghost"} 
-                 className={cn("h-11 rounded-xl font-black uppercase text-[10px] tracking-widest px-6 shadow-sm", activeTab === "outstanding" ? "bg-slate-900" : "text-slate-500")}
-                 onClick={() => setActiveTab("outstanding")}
-              >
-                 <Users className="h-4 w-4 mr-2" /> Receivables Report
-              </Button>
-           </div>
-        </div>
-
-        {activeTab === "ledger" ? (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatsCard title="Gross Collection" value={`₹${totalIncome.toLocaleString()}`} icon={TrendingUp} colorClass="bg-emerald-500 text-emerald-500" />
-              <StatsCard title="Operational Burn" value={`₹${totalExpense.toLocaleString()}`} icon={TrendingDown} colorClass="bg-destructive text-destructive" />
-              <StatsCard title="Total Net Profit" value={`₹${netProfit.toLocaleString()}`} icon={Wallet} colorClass="bg-blue-500 text-blue-500" subValue={netProfit > 0 ? "System-wide Profit" : "Liquidity Warning"} />
+        {tripIdParam ? (
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <StatsCard title="Revenue" value={`₹${displayIncome.toLocaleString()}`} icon={TrendingUp} colorClass="bg-emerald-500 text-emerald-500" />
+              <StatsCard title="Expenses" value={`₹${displayExpense.toLocaleString()}`} icon={TrendingDown} colorClass="bg-destructive text-destructive" />
+              <StatsCard title="Profit" value={`₹${displayProfit.toLocaleString()}`} icon={Wallet} colorClass="bg-blue-500 text-blue-500" />
+              <StatsCard title="Pending Amount" value={`₹${displayPending.toLocaleString()}`} icon={AlertTriangle} colorClass="bg-orange-500 text-orange-500" />
             </div>
-
-            <TableContainer className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
-               <div className="p-8 border-b bg-slate-50/50 flex justify-between items-center">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Trip-Wise Performance Ledger</h3>
-                  <Button variant="outline" className="h-9 rounded-xl font-black text-[10px] uppercase border-2">Generate Audit Report</Button>
+            
+            <div className="p-8 md:p-12 rounded-[3rem] bg-white border border-slate-100 shadow-2xl space-y-8">
+               <div className="flex items-center justify-between border-b pb-6">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Operational Financial Breakdown</h3>
+                  <Button variant="ghost" className="h-9 rounded-xl font-black text-[10px] uppercase tracking-widest text-indigo-600 hover:bg-indigo-50" onClick={() => navigate(`/trips/${tripIdParam}/bookings`)}>
+                     View Detailed Manifest
+                  </Button>
                </div>
-               <DataTable columns={tripColumns} data={tripWiseData} />
-            </TableContainer>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-6">
+                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">Revenue Stream (Approved Bookings)</p>
+                     <div className="space-y-4">
+                        {payments.filter(p => p.tripId === tripIdParam || p.tripName.includes(`#${tripIdParam}`)).map((p, i) => (
+                           <div key={i} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                              <span className="text-xs font-bold text-slate-600 uppercase">{p.customerName}</span>
+                              <span className="text-sm font-black text-slate-900">₹{p.totalBill.toLocaleString()}</span>
+                           </div>
+                        ))}
+                        {displayIncome === 0 && <p className="text-[10px] font-bold text-slate-400 italic">No approved revenue recorded</p>}
+                     </div>
+                  </div>
+
+                  <div className="space-y-6">
+                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-destructive">Expenditure Dossier</p>
+                     <div className="space-y-4">
+                        {tripWiseData.find(t => String(t.id) === String(tripIdParam))?.expenseDetails?.map((exp, i) => (
+                           <div key={i} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                              <span className="text-xs font-bold text-slate-600 uppercase">{exp.name}</span>
+                              <span className="text-sm font-black text-destructive">₹{exp.amount.toLocaleString()}</span>
+                           </div>
+                        ))}
+                        {!tripWiseData.find(t => String(t.id) === String(tripIdParam))?.expenseDetails && (
+                           <div className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                              <span className="text-xs font-bold text-slate-600 uppercase">Total Trip Burn</span>
+                              <span className="text-sm font-black text-destructive">₹{displayExpense.toLocaleString()}</span>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+               </div>
+
+               <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                  <div>
+                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500">Unsettled Receivables</p>
+                     <p className="text-sm font-bold text-slate-500 mt-1">Amount from approved but partially paid bookings</p>
+                  </div>
+                  <div className="px-8 py-4 bg-orange-50 border border-orange-100 rounded-2xl">
+                     <span className="text-2xl font-black text-orange-600">₹{displayPending.toLocaleString()}</span>
+                  </div>
+               </div>
+            </div>
           </div>
         ) : (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatsCard title="Total Billed" value={`₹${totalBilled.toLocaleString()}`} icon={IndianRupee} colorClass="bg-blue-500 text-blue-500" />
-              <StatsCard title="Total Collected" value={`₹${totalCollected.toLocaleString()}`} icon={CheckCircle} colorClass="bg-emerald-500 text-emerald-500" subValue={`${totalBilled > 0 ? Math.round((totalCollected / totalBilled) * 100) : 0}% Liquidity`} />
-              <StatsCard title="Outstanding Dues" value={`₹${totalOutstanding.toLocaleString()}`} icon={AlertTriangle} colorClass="bg-orange-500 text-orange-500" subValue={`${payments.filter((p) => p.pendingAmount > 0).length} Overdue Accounts`} />
+          <>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+               <PageHeader title="Financial Management" description="Trip-wise Profitability & Receivables Tracking" />
+               <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1 shadow-inner self-start md:self-center">
+                  <Button 
+                     variant={activeTab === "ledger" ? "default" : "ghost"} 
+                     className={cn("h-11 rounded-xl font-black uppercase text-[10px] tracking-widest px-6 shadow-sm", activeTab === "ledger" ? "bg-slate-900" : "text-slate-500")}
+                     onClick={() => setActiveTab("ledger")}
+                  >
+                     <Receipt className="h-4 w-4 mr-2" /> Trip-Wise Ledger
+                  </Button>
+                  <Button 
+                     variant={activeTab === "outstanding" ? "default" : "ghost"} 
+                     className={cn("h-11 rounded-xl font-black uppercase text-[10px] tracking-widest px-6 shadow-sm", activeTab === "outstanding" ? "bg-slate-900" : "text-slate-500")}
+                     onClick={() => setActiveTab("outstanding")}
+                  >
+                     <Users className="h-4 w-4 mr-2" /> Receivables Report
+                  </Button>
+               </div>
             </div>
 
-            <div className="space-y-4">
-              <FilterBar className="p-0 bg-transparent border-none">
-                <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl w-fit shadow-inner">
-                  {(["all", "Pending", "Partial", "Paid"]).map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setPaymentFilter(f)}
-                      className={cn(
-                        "px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
-                        paymentFilter === f ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                      )}
-                    >
-                      {f === "all" ? "Full Manifest" : f}
-                    </button>
-                  ))}
+            {activeTab === "ledger" ? (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <StatsCard title="Revenue" value={`₹${displayIncome.toLocaleString()}`} icon={TrendingUp} colorClass="bg-emerald-500 text-emerald-500" />
+                  <StatsCard title="Expenses" value={`₹${displayExpense.toLocaleString()}`} icon={TrendingDown} colorClass="bg-destructive text-destructive" />
+                  <StatsCard title="Profit" value={`₹${displayProfit.toLocaleString()}`} icon={Wallet} colorClass="bg-blue-500 text-blue-500" />
+                  <StatsCard title="Pending Amount" value={`₹${displayPending.toLocaleString()}`} icon={AlertTriangle} colorClass="bg-orange-500 text-orange-500" />
                 </div>
-              </FilterBar>
 
-              <TableContainer className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
-                 <div className="p-8 border-b bg-slate-50/50 flex justify-between items-center">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Receivables Report</h3>
-                    <div className="flex gap-2">
-                       <Button variant="outline" className="h-9 rounded-xl font-black text-[10px] uppercase border-2">Remind All</Button>
-                       <Button variant="outline" className="h-9 rounded-xl font-black text-[10px] uppercase border-2">Export CSV</Button>
+                <TableContainer className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
+                   <div className="p-8 border-b bg-slate-50/50 flex justify-between items-center">
+                      <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Trip-Wise Performance Ledger</h3>
+                      <Button variant="outline" className="h-9 rounded-xl font-black text-[10px] uppercase border-2">Generate Audit Report</Button>
+                   </div>
+                   <DataTable columns={tripColumns} data={tripWiseData} />
+                </TableContainer>
+              </div>
+            ) : (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <StatsCard title="Total Billed" value={`₹${totalBilled.toLocaleString()}`} icon={IndianRupee} colorClass="bg-blue-500 text-blue-500" />
+                  <StatsCard title="Total Collected" value={`₹${totalCollected.toLocaleString()}`} icon={CheckCircle} colorClass="bg-emerald-500 text-emerald-500" subValue={`${totalBilled > 0 ? Math.round((totalCollected / totalBilled) * 100) : 0}% Liquidity`} />
+                  <StatsCard title="Outstanding Dues" value={`₹${totalOutstanding.toLocaleString()}`} icon={AlertTriangle} colorClass="bg-orange-500 text-orange-500" subValue={`${payments.filter((p) => p.pendingAmount > 0).length} Overdue Accounts`} />
+                </div>
+
+                <div className="space-y-4">
+                  <FilterBar className="p-0 bg-transparent border-none">
+                    <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl w-fit shadow-inner">
+                      {(["all", "Pending", "Partial", "Paid"]).map((f) => (
+                        <button
+                          key={f}
+                          onClick={() => setPaymentFilter(f)}
+                          className={cn(
+                            "px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                            paymentFilter === f ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                          )}
+                        >
+                          {f === "all" ? "Full Manifest" : f}
+                        </button>
+                      ))}
                     </div>
-                 </div>
-                 <DataTable columns={paymentColumns} data={filteredPayments} />
-              </TableContainer>
-            </div>
-          </div>
+                  </FilterBar>
+
+                  <TableContainer className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
+                     <div className="p-8 border-b bg-slate-50/50 flex justify-between items-center">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Receivables Report</h3>
+                        <div className="flex gap-2">
+                           <Button variant="outline" className="h-9 rounded-xl font-black text-[10px] uppercase border-2">Remind All</Button>
+                           <Button variant="outline" className="h-9 rounded-xl font-black text-[10px] uppercase border-2">Export CSV</Button>
+                        </div>
+                     </div>
+                     <DataTable columns={paymentColumns} data={filteredPayments} />
+                  </TableContainer>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </PageLayout>
     </DashboardLayout>

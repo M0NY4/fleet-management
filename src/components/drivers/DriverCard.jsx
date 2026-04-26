@@ -25,7 +25,6 @@ export function DriverCard({ driver, onClick }) {
           {driver.status}
         </Badge>
         <div className="absolute bottom-4 left-4 text-white">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/70 mb-1">Driver ID: #{driver.id}</p>
           <h3 className="text-xl font-black tracking-tight">{driver.name}</h3>
         </div>
       </div>

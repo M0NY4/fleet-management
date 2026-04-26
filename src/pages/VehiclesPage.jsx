@@ -85,9 +85,10 @@ export default function VehiclesPage() {
   const statusCounts = useMemo(() => {
     return {
       all: data.length,
-      Active: data.filter(v => v.status === "Active").length,
-      Maintenance: data.filter(v => v.status === "Maintenance").length,
-      "In Service": data.filter(v => v.status === "In Service").length,
+      AVAILABLE: data.filter(v => v.status === "AVAILABLE").length,
+      "ON TRIP": data.filter(v => v.status === "ON TRIP").length,
+      MAINTENANCE: data.filter(v => v.status === "MAINTENANCE").length,
+      INACTIVE: data.filter(v => v.status === "INACTIVE").length,
     };
   }, [data]);
 

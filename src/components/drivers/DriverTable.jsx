@@ -25,7 +25,6 @@ export function DriverTable({ drivers = [], onEdit, onDelete, onView }) {
         <thead className="text-[10px] uppercase font-black bg-muted/30 text-muted-foreground tracking-widest border-b">
           <tr>
             <th className="px-6 py-5">Driver Name</th>
-            <th className="px-6 py-5">Driver ID</th>
             <th className="px-6 py-5">Phone No.</th>
             <th className="px-6 py-5">Date of Birth</th>
             <th className="px-6 py-5 text-center">Status</th>
@@ -49,9 +48,6 @@ export function DriverTable({ drivers = [], onEdit, onDelete, onView }) {
                    </div>
                    <span className="font-extrabold text-foreground uppercase tracking-tight">{d.name}</span>
                 </div>
-              </td>
-              <td className="px-6 py-4">
-                <span className="font-bold text-muted-foreground">#{d.id}</span>
               </td>
               <td className="px-6 py-4">
                 <span className="font-bold text-muted-foreground">{d.phone}</span>

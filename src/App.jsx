@@ -10,7 +10,9 @@ import FinancePage from "./pages/FinancePage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import CreateBookingPage from "./pages/CreateBookingPage";
 import TripListPage from "./pages/TripListPage";
-import TripDetailsPage from "./pages/TripDetailsPage";
+import TripLogisticsPage from "./pages/TripLogisticsPage";
+import TripBookingsPage from "./pages/TripBookingsPage";
+import TripExpensesPage from "./pages/TripExpensesPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import PublicBookingPage from "./pages/PublicBookingPage";
 import NotFound from "./pages/NotFound";
@@ -32,7 +34,10 @@ const App = () => (
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/create-booking" element={<CreateBookingPage />} />
           <Route path="/trips" element={<TripListPage />} />
-          <Route path="/trips/:tripId" element={<TripDetailsPage />} />
+          <Route path="/trips/:tripId" element={<Navigate to="logistics" replace />} />
+          <Route path="/trips/:tripId/logistics" element={<TripLogisticsPage />} />
+          <Route path="/trips/:tripId/bookings" element={<TripBookingsPage />} />
+          <Route path="/trips/:tripId/expenses" element={<TripExpensesPage />} />
           <Route path="/public/booking/:tripId" element={<PublicBookingPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

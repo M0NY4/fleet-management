@@ -7,12 +7,14 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
-import { AlertTriangle, Truck, Info, Calendar, IndianRupee, Fuel, Users } from "lucide-react";
+import { AlertTriangle, Truck, Info, Calendar, IndianRupee, Fuel, Users, Plus, RefreshCw } from "lucide-react";
 import { DocumentPreviewModal } from "@/components/vehicles/DocumentPreviewModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AddDocumentModal } from "@/components/vehicles/AddDocumentModal";
+import { toast } from "sonner";
 
-const getDocColumns = () => [
+const getDocColumns = (onRenew) => [
   {
     header: "Document Type",
     accessor: (r) => (
@@ -36,6 +38,28 @@ const getDocColumns = () => [
     ),
   },
   { header: "Status", accessor: (r) => <StatusBadge status={r.status} /> },
+  {
+    header: "Action",
+    className: "text-center w-24",
+    accessor: (r) => (
+      <div className="flex justify-center">
+        {r.alertMessage && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px] font-black uppercase tracking-widest border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800 flex items-center gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRenew(r);
+            }}
+          >
+            <RefreshCw className="h-3 w-3" />
+            Renew
+          </Button>
+        )}
+      </div>
+    ),
+  },
 ];
 
 function DetailItem({ icon: Icon, label, value }) {
@@ -57,8 +81,15 @@ export function VehicleDetailsModal({ open, onOpenChange, vehicle }) {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [showDocs, setShowDocs] = useState(false);
+  const [isAddDocModalOpen, setIsAddDocModalOpen] = useState(false);
+  const [renewingDoc, setRenewingDoc] = useState(null);
 
-  const docColumns = getDocColumns();
+  const handleRenew = (doc) => {
+    setRenewingDoc(doc);
+    setIsAddDocModalOpen(true);
+  };
+
+  const docColumns = getDocColumns(handleRenew);
 
   useEffect(() => {
     if (open && vehicle) {
@@ -113,7 +144,6 @@ export function VehicleDetailsModal({ open, onOpenChange, vehicle }) {
             <DetailItem icon={Users} label="Seating Capacity" value={`${vehicle.seatingCapacity} Seats`} />
             <DetailItem icon={IndianRupee} label="Purchase Cost" value={`₹${Number(vehicle.purchaseCost).toLocaleString()}`} />
             <DetailItem icon={Calendar} label="Purchase Date" value={vehicle.purchaseDate} />
-            <DetailItem icon={Truck} label="Vehicle ID" value={`#${vehicle.id}`} />
           </div>
 
           <div className="border-t pt-6">
@@ -121,14 +151,24 @@ export function VehicleDetailsModal({ open, onOpenChange, vehicle }) {
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground flex items-center gap-2">
                 <Info className="h-4 w-4 text-primary" /> Vehicle Compliance Documents
               </h3>
-              {!showDocs && (
+              <div className="flex items-center gap-2">
                 <Button 
-                  onClick={() => setShowDocs(true)}
-                  className="h-9 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest bg-primary hover:bg-primary/90"
+                  onClick={() => setIsAddDocModalOpen(true)}
+                  className="h-9 px-3 rounded-xl font-black text-[10px] uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white flex items-center gap-1.5 shadow-sm"
                 >
-                  View Documents
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Document
                 </Button>
-              )}
+                {!showDocs && (
+                  <Button 
+                    onClick={() => setShowDocs(true)}
+                    variant="outline"
+                    className="h-9 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest border-2"
+                  >
+                    View Documents
+                  </Button>
+                )}
+              </div>
             </div>
             
             {showDocs && (
@@ -166,6 +206,23 @@ export function VehicleDetailsModal({ open, onOpenChange, vehicle }) {
         open={!!previewDoc}
         onOpenChange={(val) => !val && setPreviewDoc(null)}
         document={previewDoc}
+      />
+
+      <AddDocumentModal
+        open={isAddDocModalOpen}
+        onOpenChange={(val) => {
+          setIsAddDocModalOpen(val);
+          if (!val) setRenewingDoc(null);
+        }}
+        vehicleNumber={vehicle.number}
+        renewDoc={renewingDoc}
+        onAdd={(newDoc, isUpdate) => {
+          if (isUpdate) {
+            setDocs(prev => prev.map(d => d.id === newDoc.id ? newDoc : d));
+          } else {
+            setDocs(prev => [newDoc, ...prev]);
+          }
+        }}
       />
     </>
   );

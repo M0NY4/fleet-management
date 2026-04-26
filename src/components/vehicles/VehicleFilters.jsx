@@ -45,9 +45,10 @@ export function VehicleFilters({
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="all">All Status ({statusCounts.all || 0})</SelectItem>
-              <SelectItem value="Active">Active ({statusCounts.Active || 0})</SelectItem>
-              <SelectItem value="Maintenance">Maintenance ({statusCounts.Maintenance || 0})</SelectItem>
-              <SelectItem value="In Service">In Service ({statusCounts["In Service"] || 0})</SelectItem>
+              <SelectItem value="AVAILABLE">Available ({statusCounts.AVAILABLE || 0})</SelectItem>
+              <SelectItem value="ON TRIP">On Trip ({statusCounts["ON TRIP"] || 0})</SelectItem>
+              <SelectItem value="MAINTENANCE">Maintenance ({statusCounts.MAINTENANCE || 0})</SelectItem>
+              <SelectItem value="INACTIVE">Inactive ({statusCounts.INACTIVE || 0})</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -47,7 +47,7 @@ export function AddVehicleModal({ open, onOpenChange, onAdd }) {
     const newVehicle = {
       id: Date.now(),
       ...formData,
-      status: "Active",
+      status: "AVAILABLE",
       // Fallback image if none uploaded
       image: formData.image || "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=800"
     };
